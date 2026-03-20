@@ -19,10 +19,10 @@ FestFlow is a web-based college fest management system that allows a college to 
 | Role | Description |
 |---|---|
 | `admin` | Full access. Creates tournaments, events, approves teams, manages everything. |
-| `referee` | Can enter match scores for bracket events and record judged event results. |
+| `event_manager` | Can manage assigned events, enter match scores, and record judged results. |
 | `participant` | Can sign up, join a team, register for events, and view their own data. |
 
-Roles are stored in the `users` table. Supabase Auth handles authentication. There is no public access — every page requires a logged-in session.
+Roles are stored in the `users` table. Supabase Auth handles authentication. Public access is available for tournament viewing; other pages require a session. Unauthenticated users are redirected to `/tournaments`.
 
 ---
 
@@ -31,7 +31,7 @@ Roles are stored in the `users` table. Supabase Auth handles authentication. The
 ### 3.1 Enums
 
 ```sql
-user_role:         admin | referee | participant
+user_role:         admin | event_manager | participant
 tournament_status: draft | registration_open | ongoing | completed
 team_status:       pending | confirmed | disqualified
 event_type:        team | individual
@@ -122,6 +122,7 @@ Individual competitions within a tournament (cricket, dance, debate, etc.).
 | venue | text | Nullable |
 | scheduled_at | timestamptz | Nullable, not strict |
 | status | event_status | Default: `upcoming` |
+| assigned_to | uuid FK | References `users(id)` — the event manager |
 | created_by | uuid FK | References `users(id)` |
 | created_at | timestamptz | |
 
@@ -166,7 +167,8 @@ Single elimination bracket rows. Only created for `format = 'bracket'` events (e
 | status | match_status | Default: `scheduled` |
 | venue | text | Nullable |
 | scheduled_at | timestamptz | Nullable |
-| entered_by | uuid FK | References `users(id)` — admin or referee |
+| entered_by | uuid FK | References `users(id)` — admin or event manager |
+| next_match_id | uuid FK | References `matches(id)` — for bracket progression |
 | updated_at | timestamptz | |
 
 #### `event_results`
@@ -226,7 +228,7 @@ Prevents inserting a match row for an event whose `format` is not `bracket`. Rai
 ## 4. Application Routes
 
 ```
-/                   → Redirect to /login
+/                   → Redirect to /tournaments
 /login              → Login page
 /signup             → Signup page
 /dashboard          → Participant home (protected)
@@ -235,12 +237,17 @@ Prevents inserting a match row for an event whose `format` is not `bracket`. Rai
 /admin/tournaments/:id          → Tournament detail
 /admin/tournaments/:id/events   → Event list and creation
 /admin/tournaments/:id/teams    → Team approval queue
-/admin/events/:id/bracket       → Bracket management (bracket events)
-/admin/events/:id/results       → Result entry (judged events)
-/referee/events/:id/scores      → Score entry for referees
-/t/:id              → Public tournament view (leaderboard + schedule)
+/admin/events/:id/bracket       → Bracket management (admin/EM)
+/admin/events/:id/results       → Result entry (admin/EM)
+/event-manager      → Event Manager dashboard (assigned events)
+/tournaments        → Public tournament list
+/tournaments/:id    → Public tournament detail (leaderboard)
+/tournaments/:id/events/:eventId → Public event detail
 /join               → Join a team via code
+/dashboard/team/:id → Detailed team view (members + events)
 ```
+
+**Universal Sidebar:** All authenticated pages use a shared, collapsible side navigation layout (`AppLayout`) that adapts based on the user's role.
 
 ---
 
@@ -329,11 +336,13 @@ When the final match is completed, `event_results` rows are inserted automatical
 ### 5.5 Judged Events
 
 **Result entry**
-1. Admin or referee navigates to `/admin/events/:id/results`.
-2. Sees three dropdowns: 1st place, 2nd place, 3rd place — each populated with confirmed event registrations.
-3. Submits by calling `supabase.rpc('record_judged_results', { ... })`.
-4. Points are automatically read from the event's `points_first/second/third` and written to `event_results`.
-5. Results can be corrected before the tournament is marked complete — the function uses `on conflict ... do update`.
+1. Admin or Event Manager navigates to `/admin/events/:id/results`.
+2. Form adapts to registration count: shows 1st, 2nd (if 2+), and 3rd (if 3+) place selectors.
+3. Submits by calling `record_judged_results` RPC.
+4. RPC validates that selected teams are confirmed for the event (handles both team and individual types).
+5. Points are automatically read from the event's `points_first/second/third` and written to `event_results`.
+6. Results can be corrected anytime — the function uses `on conflict ... do update`.
+7. Completed events remain visible on the dashboard but button text changes to "Edit Scores".
 
 ### 5.6 Leaderboard
 
@@ -416,16 +425,16 @@ The recommended order to build features, based on dependencies:
 
 1. **Supabase setup** — run schema SQL, run auth trigger SQL, disable email confirmation for dev.
 2. **Auth flow** — signup, login, session persistence, protected routes. ✅ Done
-3. **Admin: tournament creation** — create and list tournaments, set status.
-4. **Admin: event creation** — create events inside a tournament, set format and type.
-5. **Team registration** — captain creates team, members join via code, admin approves.
-6. **Event registration** — teams/participants register for specific events.
-7. **Bracket generation** — generate and display bracket, enter scores, advance winners.
-8. **Judged event results** — three-dropdown result entry form.
-9. **Leaderboard** — query `team_leaderboard` view, display rankings.
+3. **Admin: tournament creation** — create and list tournaments, set status. ✅ Done
+4. **Admin: event creation** — create events inside a tournament, set format and type. ✅ Done
+5. **Team registration** — captain creates team, members join via code, admin approves. ✅ Done
+6. **Event registration** — teams/participants register for specific events. ✅ Done
+7. **Bracket generation** — generate and display bracket, enter scores, advance winners. ✅ Done
+8. **Judged event results** — three-dropdown result entry form. ✅ Done
+9. **Leaderboard** — query `team_leaderboard` view, display rankings. ✅ Done
 10. **Realtime updates** — subscribe to `event_results` and `matches` for live updates.
-11. **Referee role** — scoped score entry page, role-based route guard.
-12. **Public tournament page** — leaderboard and schedule visible without login.
+11. **Event Manager role** — scoped score entry page, assignment system. ✅ Done
+12. **Public tournament page** — leaderboard and schedule visible without login. ✅ Done
 13. **RLS policies** — add row-level security before deploying to production.
 
 ---

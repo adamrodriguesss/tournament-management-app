@@ -1,18 +1,14 @@
-import { redirect, useNavigate } from "react-router";
-import { supabase } from "../../lib/supabase";
+import { redirect } from "react-router";
+import { getSession, getRoleProfile } from "../../services/auth";
 import { AdminLayout } from "../../components/layout/AdminLayout";
 
 export async function clientLoader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) {
     return redirect("/login");
   }
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("role, full_name, email")
-    .eq("id", session.user.id)
-    .single();
+  const { data: user, error } = await getRoleProfile(session.user.id);
 
   if (error || !user || user.role !== "admin") {
     return redirect("/");

@@ -1,53 +1,36 @@
 import { redirect, useNavigate, useRevalidator } from 'react-router';
-import { supabase } from '../../lib/supabase';
+import { getSession, getRoleProfile } from '../../services/auth';
+import { getTournamentById } from '../../services/tournaments';
+import { getTeamsByTournament, updateTeamStatus } from '../../services/teams';
+import { getParticipantsByTeamIds } from '../../services/participants';
 import { Button } from '../../components/ui/Button';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import type { Route } from './+types/teams';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) return redirect("/login");
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("role, full_name, email")
-    .eq("id", session.user.id)
-    .single();
+  const { data: user } = await getRoleProfile(session.user.id);
 
   if (!user || user.role !== "admin") return redirect("/");
 
   const tournamentId = params.id;
 
-  const { data: tournament } = await supabase
-    .from("tournaments")
-    .select("*")
-    .eq("id", tournamentId)
-    .single();
+  const { data: tournament } = await getTournamentById(tournamentId);
 
   if (!tournament) return redirect("/admin/tournaments");
 
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("*")
-    .eq("tournament_id", tournamentId)
-    .order("created_at", { ascending: false });
+  const { data: teams } = await getTeamsByTournament(tournamentId);
 
   // Fetch participants for all teams
-  const teamIds = (teams || []).map((t: any) => t.id);
-  let participants: any[] = [];
-  if (teamIds.length > 0) {
-    const { data: parts } = await supabase
-      .from("participants")
-      .select("*, users(full_name, email, department)")
-      .in("team_id", teamIds)
-      .order("registered_at", { ascending: true });
-    participants = parts || [];
-  }
+  const teamIds = teams.map((t: any) => t.id);
+  const participants = await getParticipantsByTeamIds(teamIds);
 
   return {
     user: { ...user, id: session.user.id },
     tournament,
-    teams: teams || [],
+    teams,
     participants,
   };
 }
@@ -82,39 +65,13 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   const revalidator = useRevalidator();
   const { user, tournament, teams, participants } = loaderData;
 
-  const handleApproveParticipant = async (participantId: string) => {
-    await supabase
-      .from("participants")
-      .update({
-        status: 'confirmed',
-        approved_by: user.id,
-        approved_at: new Date().toISOString(),
-      })
-      .eq("id", participantId);
-    revalidator.revalidate();
-  };
-
-  const handleRejectParticipant = async (participantId: string) => {
-    await supabase
-      .from("participants")
-      .update({ status: 'rejected' })
-      .eq("id", participantId);
-    revalidator.revalidate();
-  };
-
   const handleConfirmTeam = async (teamId: string) => {
-    await supabase
-      .from("teams")
-      .update({ status: 'confirmed' })
-      .eq("id", teamId);
+    await updateTeamStatus(teamId, 'confirmed');
     revalidator.revalidate();
   };
 
   const handleDisqualifyTeam = async (teamId: string) => {
-    await supabase
-      .from("teams")
-      .update({ status: 'disqualified' })
-      .eq("id", teamId);
+    await updateTeamStatus(teamId, 'disqualified');
     revalidator.revalidate();
   };
 
@@ -137,7 +94,7 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
       </div>
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold">{tournament.name}</h1>
-        <p className="text-slate-400 mt-1">Team & Participant Approval Queue</p>
+        <p className="text-slate-400 mt-1">Team Management Queue</p>
       </div>
 
       {teams.length === 0 ? (
@@ -196,7 +153,6 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                             <th className="px-5 py-3">Email</th>
                             <th className="px-5 py-3">Role</th>
                             <th className="px-5 py-3">Status</th>
-                            <th className="px-5 py-3 text-right">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -209,24 +165,6 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusBadge(p.status)}`}>
                                   {p.status}
                                 </span>
-                              </td>
-                              <td className="px-5 py-3 text-right">
-                                {p.status === 'pending' && (
-                                  <div className="flex gap-2 justify-end">
-                                    <button
-                                      onClick={() => handleApproveParticipant(p.id)}
-                                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectParticipant(p.id)}
-                                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
-                                )}
                               </td>
                             </tr>
                           ))}
@@ -246,22 +184,6 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                           </div>
                           <p className="text-xs text-slate-400">{p.users?.email || '—'}</p>
                           <p className="text-xs text-slate-500 capitalize">Role: {p.role_in_team}</p>
-                          {p.status === 'pending' && (
-                            <div className="flex gap-2 pt-1">
-                              <button
-                                onClick={() => handleApproveParticipant(p.id)}
-                                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors flex-1"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectParticipant(p.id)}
-                                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors flex-1"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>

@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
-import { supabase } from '../lib/supabase';
+import { getSession, getProfile, logout } from '../services/auth';
+import { getActiveTournaments } from '../services/tournaments';
+import { createTeam } from '../services/teams';
+import {
+  getParticipationsByUser,
+  getPendingMembersForCaptains,
+  createCaptainParticipation,
+  joinTeam,
+  approveParticipant,
+  rejectParticipant,
+} from '../services/participants';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
 export async function clientLoader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) {
     return redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", session.user.id)
-    .single();
+  const { data: profile } = await getProfile(session.user.id);
 
   if (!profile) {
     return redirect("/login");
@@ -23,30 +29,39 @@ export async function clientLoader() {
   if (profile.role === 'admin') return redirect("/admin/dashboard");
   if (profile.role === 'referee') return redirect("/referee");
 
-  // Fetch all active tournaments
-  const { data: tournaments } = await supabase
-    .from("tournaments")
-    .select("*")
-    .in("status", ["registration_open", "ongoing"])
-    .order("created_at", { ascending: false });
+  const { data: tournaments } = await getActiveTournaments();
 
-  // Fetch all participant records for this user
-  const { data: participations } = await supabase
-    .from("participants")
-    .select("*, teams(*), tournaments(*)")
-    .eq("user_id", session.user.id);
+  const { data: participations } = await getParticipationsByUser(session.user.id);
+
+  // Fetch pending participants for teams where the user is captain
+  const captainTeamIds = participations
+    .filter((p: any) => p.role_in_team === 'captain')
+    .map((p: any) => p.team_id);
+
+  const pendingMembers = await getPendingMembersForCaptains(captainTeamIds);
 
   return {
     profile,
-    tournaments: tournaments || [],
-    participations: participations || []
+    tournaments,
+    participations,
+    pendingMembers
   };
 }
 
 export default function Dashboard({ loaderData }: { loaderData: any }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { profile, tournaments, participations } = loaderData;
+  const { profile, tournaments, participations, pendingMembers } = loaderData;
+
+  const handleApproveParticipant = async (participantId: string) => {
+    await approveParticipant(participantId, profile.id);
+    revalidator.revalidate();
+  };
+
+  const handleRejectParticipant = async (participantId: string) => {
+    await rejectParticipant(participantId);
+    revalidator.revalidate();
+  };
 
   const [view, setView] = useState<'home' | 'tournament_action' | 'create' | 'join'>('home');
   const [selectedTournament, setSelectedTournament] = useState<any>(null);
@@ -58,7 +73,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
     navigate("/login");
   };
 
@@ -82,18 +97,14 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
 
     const token = Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    const { data: newTeam, error: teamError } = await supabase
-      .from("teams")
-      .insert({
-        tournament_id: selectedTournament.id,
-        name: teamName,
-        department: profile.department,
-        registration_token: token,
-        status: 'pending',
-        created_by: profile.id,
-      })
-      .select()
-      .single();
+    const { data: newTeam, error: teamError } = await createTeam({
+      tournament_id: selectedTournament.id,
+      name: teamName,
+      department: profile.department,
+      registration_token: token,
+      status: 'pending',
+      created_by: profile.id,
+    });
 
     if (teamError) {
       setError(teamError.message);
@@ -101,15 +112,11 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
       return;
     }
 
-    const { error: partError } = await supabase
-      .from("participants")
-      .insert({
-        user_id: profile.id,
-        team_id: newTeam.id,
-        tournament_id: selectedTournament.id,
-        role_in_team: 'captain',
-        status: 'confirmed',
-      });
+    const { error: partError } = await createCaptainParticipation({
+      user_id: profile.id,
+      team_id: newTeam.id,
+      tournament_id: selectedTournament.id,
+    });
 
     if (partError) {
       setError(partError.message);
@@ -119,7 +126,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
 
     setSuccess(`Team "${teamName}" created! Join code: ${token}`);
     setLoading(false);
-    revalidator.revalidate(); // Refresh data to show it in My Teams
+    revalidator.revalidate();
   };
 
   const handleJoinTeam = async (e: React.FormEvent) => {
@@ -127,12 +134,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     setLoading(true);
     setError(null);
 
-    const { data, error: rpcError } = await supabase.rpc('join_team', {
-      p_token: joinCode,
-      p_user_id: profile.id,
-      p_full_name: profile.full_name,
-      p_roll_number: null,
-    });
+    const { data, error: rpcError } = await joinTeam(joinCode, profile.id, profile.full_name);
 
     if (rpcError) {
       setError(rpcError.message);
@@ -146,53 +148,88 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
       return;
     }
 
-    setSuccess(`You've joined ${data?.team_name || 'the team'}! Awaiting admin approval.`);
+    setSuccess(`You've joined ${data?.team_name || 'the team'}! Awaiting captain approval.`);
     setLoading(false);
-    revalidator.revalidate(); // Refresh data
+    revalidator.revalidate();
   };
 
-  const TeamCard = ({ participation, team, tournament }: any) => (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div>
-          <h3 className="text-lg font-semibold">{team.name}</h3>
-          <p className="text-xs text-slate-400">{tournament.name}</p>
-        </div>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${team.status === 'confirmed'
-          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-          : team.status === 'disqualified'
-            ? 'bg-red-500/10 text-red-500 border-red-500/20'
-            : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-          }`}>
-          Team: {team.status}
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Role</p>
-          <p className="capitalize">{participation.role_in_team}</p>
-        </div>
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Status</p>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${participation.status === 'confirmed'
-            ? 'bg-emerald-500/10 text-emerald-500'
-            : participation.status === 'rejected'
-              ? 'bg-red-500/10 text-red-500'
-              : 'bg-amber-500/10 text-amber-500'
+  const TeamCard = ({ participation, team, tournament }: any) => {
+    const teamPendingMembers = pendingMembers.filter((m: any) => m.team_id === team.id);
+
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">{team.name}</h3>
+            <p className="text-xs text-slate-400">{tournament.name}</p>
+          </div>
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${team.status === 'confirmed'
+            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+            : team.status === 'disqualified'
+              ? 'bg-red-500/10 text-red-500 border-red-500/20'
+              : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
             }`}>
-            {participation.status}
+            Team: {team.status}
           </span>
         </div>
-        {participation.role_in_team === 'captain' && (
-          <div className="col-span-2 mt-2">
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Team Join Code</p>
-            <code className="bg-slate-950 px-3 py-1.5 rounded text-indigo-400 font-mono text-sm inline-block tracking-widest">{team.registration_token}</code>
-            <p className="text-xs text-slate-500 mt-1">Share this code with your teammates to let them join.</p>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Role</p>
+            <p className="capitalize">{participation.role_in_team}</p>
           </div>
-        )}
+          <div>
+            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Status</p>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${participation.status === 'confirmed'
+              ? 'bg-emerald-500/10 text-emerald-500'
+              : participation.status === 'rejected'
+                ? 'bg-red-500/10 text-red-500'
+                : 'bg-amber-500/10 text-amber-500'
+              }`}>
+              {participation.status}
+            </span>
+          </div>
+          {participation.role_in_team === 'captain' && (
+            <div className="col-span-2 mt-2">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Team Join Code</p>
+              <code className="bg-slate-950 px-3 py-1.5 rounded text-indigo-400 font-mono text-sm inline-block tracking-widest">{team.registration_token}</code>
+              <p className="text-xs text-slate-500 mt-1">Share this code with your teammates to let them join.</p>
+
+              {/* Pending Members */}
+              {teamPendingMembers.length > 0 && (
+                <div className="mt-4 border-t border-slate-700 pt-4">
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Pending Requests ({teamPendingMembers.length})</p>
+                  <div className="space-y-2">
+                    {teamPendingMembers.map((member: any) => (
+                      <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                        <div>
+                          <p className="text-sm font-medium">{member.users?.full_name}</p>
+                          <p className="text-xs text-slate-400">{member.users?.email}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApproveParticipant(member.id)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectParticipant(member.id)}
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">

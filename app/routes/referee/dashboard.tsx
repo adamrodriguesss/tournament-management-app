@@ -1,31 +1,23 @@
 import { redirect, useNavigate } from 'react-router';
-import { supabase } from '../../lib/supabase';
+import { getSession, getRoleProfile, logout } from '../../services/auth';
+import { getActiveEvents } from '../../services/events';
 import { Button } from '../../components/ui/Button';
 
 export async function clientLoader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) {
     return redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role, full_name, email")
-    .eq("id", session.user.id)
-    .single();
+  const { data: profile } = await getRoleProfile(session.user.id);
 
   if (!profile || profile.role !== 'referee') {
     return redirect("/");
   }
 
-  // Fetch events assigned to referees (all bracket/judged events for now)
-  const { data: events } = await supabase
-    .from("events")
-    .select("*, tournaments(name)")
-    .in("status", ["upcoming", "ongoing"])
-    .order("scheduled_at", { ascending: true });
+  const { data: events } = await getActiveEvents();
 
-  return { profile, events: events || [] };
+  return { profile, events };
 }
 
 type EventRow = {
@@ -49,7 +41,7 @@ export default function RefereeDashboard({ loaderData }: { loaderData: LoaderDat
   const { profile, events } = loaderData;
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
     navigate("/login");
   };
 

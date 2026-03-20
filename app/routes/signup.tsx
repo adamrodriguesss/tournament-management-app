@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, redirect } from 'react-router';
-import { supabase } from '../lib/supabase';
+import { getSession, signup } from '../services/auth';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
 export async function clientLoader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (session) {
     return redirect("/");
   }
@@ -28,15 +28,9 @@ export default function SignUp() {
     setLoading(true);
     setError(null);
     
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          department: department,
-        }
-      }
+    const { error: authError } = await signup(email, password, {
+      full_name: fullName,
+      department,
     });
 
     if (authError) {

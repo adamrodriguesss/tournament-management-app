@@ -1,28 +1,22 @@
 import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
-import { supabase } from '../../lib/supabase';
+import { getSession, getRoleProfile } from '../../services/auth';
+import { getAllTournaments, createTournament } from '../../services/tournaments';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 
 export async function clientLoader() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getSession();
   if (!session) return redirect("/login");
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("role, full_name, email")
-    .eq("id", session.user.id)
-    .single();
+  const { data: user } = await getRoleProfile(session.user.id);
 
   if (!user || user.role !== "admin") return redirect("/");
 
-  const { data: tournaments } = await supabase
-    .from("tournaments")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data: tournaments } = await getAllTournaments();
 
-  return { user: { ...user, id: session.user.id }, tournaments: tournaments || [] };
+  return { user: { ...user, id: session.user.id }, tournaments };
 }
 
 type Tournament = {
@@ -59,7 +53,7 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
     setLoading(true);
     setError(null);
 
-    const { error: insertError } = await supabase.from("tournaments").insert({
+    const { error: insertError } = await createTournament({
       name,
       description: description || null,
       start_date: startDate || null,

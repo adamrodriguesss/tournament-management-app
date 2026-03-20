@@ -185,6 +185,7 @@ export function AppLayout({ user, activeItem, children, contextTitle }: AppLayou
 }
 
 // ── Backwards-compatible alias so AdminLayout imports still work ──
-export function AdminLayout(props: Omit<AppLayoutProps, 'user'> & { user: { full_name: string; email: string } }) {
-  return <AppLayout {...props} user={{ ...props.user, role: 'admin' }} />;
+export function AdminLayout(props: Omit<AppLayoutProps, 'user'> & { user: { full_name: string; email: string }; tournamentName?: string }) {
+  const { tournamentName, ...rest } = props;
+  return <AppLayout {...rest} user={{ ...props.user, role: 'admin' }} contextTitle={tournamentName || rest.contextTitle} />;
 }

@@ -12,7 +12,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   if (!session) return redirect("/login");
 
   const { data: user } = await getRoleProfile(session.user.id);
-  if (!user || user.role !== "admin") return redirect("/");
+  if (!user || !['admin', 'event_manager'].includes(user.role)) return redirect("/");
 
   const eventId = params.id;
   
@@ -153,7 +153,7 @@ export default function AdminJudgedResults({ loaderData }: { loaderData: any }) 
                 )}
 
                 <div className="space-y-4">
-                  {/* 1st Place */}
+                  {/* 1st Place — always shown */}
                   <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
                     <div className="sm:w-32 shrink-0">
                       <span className="font-bold text-amber-500">🥇 1st Place</span>
@@ -172,41 +172,45 @@ export default function AdminJudgedResults({ loaderData }: { loaderData: any }) 
                     </select>
                   </div>
 
-                  {/* 2nd Place */}
-                  <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-400/10 border border-slate-400/20 p-4 rounded-lg">
-                    <div className="sm:w-32 shrink-0">
-                      <span className="font-bold text-slate-300">🥈 2nd Place</span>
-                      <p className="text-xs text-slate-400/70 mt-0.5">{event.points_second} pts</p>
+                  {/* 2nd Place — shown only when 2+ registrations */}
+                  {registrations.length >= 2 && (
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-400/10 border border-slate-400/20 p-4 rounded-lg">
+                      <div className="sm:w-32 shrink-0">
+                        <span className="font-bold text-slate-300">🥈 2nd Place</span>
+                        <p className="text-xs text-slate-400/70 mt-0.5">{event.points_second} pts</p>
+                      </div>
+                      <select
+                        value={secondPlace}
+                        onChange={(e) => setSecondPlace(e.target.value)}
+                        className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-slate-400/50"
+                      >
+                        <option value="">-- Optional --</option>
+                        {options.map((opt: any) => (
+                          <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
-                    <select
-                      value={secondPlace}
-                      onChange={(e) => setSecondPlace(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-slate-400/50"
-                    >
-                      <option value="">-- Select Runner Up --</option>
-                      {options.map((opt: any) => (
-                        <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                  )}
 
-                  {/* 3rd Place */}
-                  <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-orange-700/10 border border-orange-700/20 p-4 rounded-lg">
-                    <div className="sm:w-32 shrink-0">
-                      <span className="font-bold text-orange-400">🥉 3rd Place</span>
-                      <p className="text-xs text-orange-400/70 mt-0.5">{event.points_third} pts</p>
+                  {/* 3rd Place — shown only when 3+ registrations */}
+                  {registrations.length >= 3 && (
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-orange-700/10 border border-orange-700/20 p-4 rounded-lg">
+                      <div className="sm:w-32 shrink-0">
+                        <span className="font-bold text-orange-400">🥉 3rd Place</span>
+                        <p className="text-xs text-orange-400/70 mt-0.5">{event.points_third} pts</p>
+                      </div>
+                      <select
+                        value={thirdPlace}
+                        onChange={(e) => setThirdPlace(e.target.value)}
+                        className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-orange-500/50"
+                      >
+                        <option value="">-- Optional --</option>
+                        {options.map((opt: any) => (
+                          <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
-                    <select
-                      value={thirdPlace}
-                      onChange={(e) => setThirdPlace(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-orange-500/50"
-                    >
-                      <option value="">-- Select 3rd Place --</option>
-                      {options.map((opt: any) => (
-                        <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                  )}
                 </div>
 
                 <div className="pt-2 flex justify-end">

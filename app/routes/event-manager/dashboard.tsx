@@ -1,6 +1,6 @@
 import { redirect, useNavigate } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
-import { getActiveEvents } from '../../services/events';
+import { getEventsAssignedTo } from '../../services/events';
 import { Button } from '../../components/ui/Button';
 import { AppLayout } from '../../components/layout/AdminLayout';
 
@@ -16,9 +16,9 @@ export async function clientLoader() {
     return redirect("/");
   }
 
-  const { data: events } = await getActiveEvents();
+  const { data: events } = await getEventsAssignedTo(session.user.id);
 
-  return { profile, events };
+  return { profile: { ...profile, id: session.user.id }, events };
 }
 
 type EventRow = {
@@ -78,8 +78,10 @@ export default function EventManagerDashboard({ loaderData }: { loaderData: Load
                     }`}>
                       {event.format}
                     </span>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                      event.status === 'ongoing'
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                      event.status === 'completed'
+                        ? 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                        : event.status === 'ongoing'
                         ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                         : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                     }`}>
@@ -96,10 +98,10 @@ export default function EventManagerDashboard({ loaderData }: { loaderData: Load
                 </div>
                 <div className="mt-4">
                   <Button
-                    variant="primary"
+                    variant={event.status === 'completed' ? 'secondary' : 'primary'}
                     onClick={() => navigate(`/admin/events/${event.id}/${event.format === 'bracket' ? 'bracket' : 'results'}`)}
                   >
-                    Enter Scores
+                    {event.status === 'completed' ? 'Edit Scores' : 'Enter Scores'}
                   </Button>
                 </div>
               </div>

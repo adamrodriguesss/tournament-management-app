@@ -12,7 +12,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   if (!session) return redirect("/login");
 
   const { data: user } = await getRoleProfile(session.user.id);
-  if (!user || user.role !== "admin") return redirect("/");
+  if (!user || !['admin', 'event_manager'].includes(user.role)) return redirect("/");
 
   const eventId = params.id;
   

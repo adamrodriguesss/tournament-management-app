@@ -5,7 +5,7 @@ export async function getActiveEvents() {
   const { data, error } = await supabase
     .from("events")
     .select("*, tournaments(name)")
-    .in("status", ["upcoming", "ongoing"])
+    .in("status", ["upcoming", "ongoing", "completed"])
     .order("scheduled_at", { ascending: true });
   return { data: data || [], error };
 }
@@ -198,3 +198,43 @@ export async function getEventResults(eventId: string) {
     .order("position", { ascending: true });
   return { data: data || [], error };
 }
+
+/** Fetches all users with the event_manager role */
+export async function getEventManagers() {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, full_name, email")
+    .eq("role", "event_manager")
+    .order("full_name", { ascending: true });
+  return { data: data || [], error };
+}
+
+/** Assigns an event manager to an event (or clears the assignment) */
+export async function assignEventManager(eventId: string, userId: string | null) {
+  const { error } = await supabase
+    .from("events")
+    .update({ assigned_to: userId })
+    .eq("id", eventId);
+  return { error };
+}
+
+/** Fetches events assigned to a specific user */
+export async function getEventsAssignedTo(userId: string) {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*, tournaments(name)")
+    .eq("assigned_to", userId)
+    .in("status", ["upcoming", "ongoing", "completed"])
+    .order("scheduled_at", { ascending: true });
+  return { data: data || [], error };
+}
+
+/** Deletes an event. Cascading FKs automatically remove registrations, matches, results, and roster entries. */
+export async function deleteEvent(eventId: string) {
+  const { error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", eventId);
+  return { error };
+}
+

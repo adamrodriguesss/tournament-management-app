@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
 import { getTournamentById } from '../../services/tournaments';
-import { getEventsByTournament, createEvent } from '../../services/events';
+import { getEventsByTournament, createEvent, getEventManagers, assignEventManager, deleteEvent } from '../../services/events';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AdminLayout } from '../../components/layout/AdminLayout';
@@ -23,11 +23,13 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   if (!tournament) return redirect("/admin/tournaments");
 
   const { data: events } = await getEventsByTournament(tournamentId);
+  const { data: eventManagers } = await getEventManagers();
 
   return {
     user: { ...user, id: session.user.id },
     tournament,
-    events
+    events,
+    eventManagers,
   };
 }
 
@@ -41,20 +43,29 @@ type EventRow = {
   venue: string | null;
   scheduled_at: string | null;
   max_participants_per_team: number | null;
+  assigned_to: string | null;
+};
+
+type EventManager = {
+  id: string;
+  full_name: string;
+  email: string;
 };
 
 type LoaderData = {
   user: { role: string; full_name: string; email: string; id: string };
   tournament: { id: string; name: string; status: string };
   events: EventRow[];
+  eventManagers: EventManager[];
 };
 
 export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { user, tournament, events } = loaderData;
+  const { user, tournament, events, eventManagers } = loaderData;
 
   const [showCreate, setShowCreate] = useState(false);
+  const [assigningEventId, setAssigningEventId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('team');
@@ -108,6 +119,21 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
     setMaxParticipants('');
     setShowCreate(false);
     setLoading(false);
+    revalidator.revalidate();
+  };
+
+  const handleAssign = async (eventId: string, managerId: string | null) => {
+    setAssigningEventId(eventId);
+    await assignEventManager(eventId, managerId);
+    setAssigningEventId(null);
+    revalidator.revalidate();
+  };
+
+  const handleDelete = async (eventId: string, eventName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${eventName}"? This will permanently remove all registrations, matches, and results for this event.`)) {
+      return;
+    }
+    await deleteEvent(eventId);
     revalidator.revalidate();
   };
 
@@ -240,11 +266,33 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
                 {e.venue && <span>📍 {e.venue}</span>}
                 {e.scheduled_at && <span>🕐 {new Date(e.scheduled_at).toLocaleString()}</span>}
               </div>
-              <div className="flex gap-3">
-                {/* Future links to bracket management or results entry */}
+              <div className="flex flex-wrap gap-3 items-center">
+                {/* Assign Event Manager */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Assigned to:</span>
+                  <select
+                    value={e.assigned_to || ''}
+                    onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
+                    disabled={assigningEventId === e.id}
+                    className="text-xs px-2 py-1.5 bg-slate-900 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
+                  >
+                    <option value="">Unassigned</option>
+                    {eventManagers.map((mgr) => (
+                      <option key={mgr.id} value={mgr.id}>
+                        {mgr.full_name || mgr.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Button variant="secondary" onClick={() => navigate(`/admin/events/${e.id}/${e.format === 'bracket' ? 'bracket' : 'results'}`)}>
                   Manage {e.format === 'bracket' ? 'Bracket' : 'Results'}
                 </Button>
+                <button
+                  onClick={() => handleDelete(e.id, e.name)}
+                  className="text-xs px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors font-medium"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}

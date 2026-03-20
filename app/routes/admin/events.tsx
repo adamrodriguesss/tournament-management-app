@@ -121,9 +121,9 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
   };
 
   return (
-    <AdminLayout user={user} activeItem="Event Management">
+    <AdminLayout user={user} activeItem="Event Management" tournamentName={tournament.name}>
       <div className="mb-2">
-        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors inline-block">← Back to Tournaments</button>
+        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors inline-block font-medium">←</button>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>

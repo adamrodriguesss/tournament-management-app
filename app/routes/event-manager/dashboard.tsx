@@ -1,17 +1,18 @@
 import { redirect, useNavigate } from 'react-router';
-import { getSession, getRoleProfile, logout } from '../../services/auth';
+import { getSession, getRoleProfile } from '../../services/auth';
 import { getActiveEvents } from '../../services/events';
 import { Button } from '../../components/ui/Button';
+import { AppLayout } from '../../components/layout/AdminLayout';
 
 export async function clientLoader() {
   const session = await getSession();
   if (!session) {
-    return redirect("/login");
+    return redirect("/tournaments");
   }
 
   const { data: profile } = await getRoleProfile(session.user.id);
 
-  if (!profile || profile.role !== 'referee') {
+  if (!profile || profile.role !== 'event_manager') {
     return redirect("/");
   }
 
@@ -36,35 +37,16 @@ type LoaderData = {
   events: EventRow[];
 };
 
-export default function RefereeDashboard({ loaderData }: { loaderData: LoaderData }) {
+export default function EventManagerDashboard({ loaderData }: { loaderData: LoaderData }) {
   const navigate = useNavigate();
   const { profile, events } = loaderData;
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
-      {/* Top Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-800 bg-slate-950">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <h1 className="text-xl font-bold">FestFlow</h1>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            Referee
-          </span>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-sm text-slate-400 hidden sm:inline">{profile.email}</span>
-          <Button variant="secondary" onClick={handleLogout}>Sign Out</Button>
-        </div>
-      </header>
-
-      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl mx-auto w-full">
+    <AppLayout user={{ ...profile, role: 'event_manager' }} activeItem="Dashboard">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold">Referee Dashboard</h2>
-          <p className="text-slate-400 mt-1">Welcome back, {profile.full_name || 'Referee'}. Here are events awaiting scores.</p>
+          <h2 className="text-2xl font-bold">Event Manager Dashboard</h2>
+          <p className="text-slate-400 mt-1">Welcome back, {profile.full_name || 'Event Manager'}. Here are events awaiting scores.</p>
         </div>
 
         {/* Events List */}
@@ -115,7 +97,7 @@ export default function RefereeDashboard({ loaderData }: { loaderData: LoaderDat
                 <div className="mt-4">
                   <Button
                     variant="primary"
-                    onClick={() => navigate(`/referee/events/${event.id}/scores`)}
+                    onClick={() => navigate(`/admin/events/${event.id}/${event.format === 'bracket' ? 'bracket' : 'results'}`)}
                   >
                     Enter Scores
                   </Button>
@@ -124,7 +106,7 @@ export default function RefereeDashboard({ loaderData }: { loaderData: LoaderDat
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

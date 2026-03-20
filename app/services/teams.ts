@@ -35,3 +35,13 @@ export async function updateTeamStatus(teamId: string, status: string) {
     .eq("id", teamId);
   return { error };
 }
+
+/** Fetches a single team by ID. */
+export async function getTeamById(teamId: string) {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*, tournaments(*)")
+    .eq("id", teamId)
+    .single();
+  return { data, error };
+}

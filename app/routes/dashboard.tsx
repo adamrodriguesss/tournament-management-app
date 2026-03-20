@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
-import { getSession, getProfile, logout } from '../services/auth';
+import { getSession, getProfile } from '../services/auth';
 import { getActiveTournaments } from '../services/tournaments';
 import { createTeam } from '../services/teams';
 import {
@@ -13,6 +13,7 @@ import { getActiveEvents, getEventRegistrationsByTeams, registerTeamForEvent, ge
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { TeamCard } from '../components/dashboard/TeamCard';
+import { AppLayout } from '../components/layout/AdminLayout';
 import { EventCard } from '../components/dashboard/EventCard';
 
 export async function clientLoader() {
@@ -28,7 +29,7 @@ export async function clientLoader() {
   }
 
   if (profile.role === 'admin') return redirect("/admin/dashboard");
-  if (profile.role === 'referee') return redirect("/referee");
+  if (profile.role === 'event_manager') return redirect("/event-manager");
 
   const { data: tournaments } = await getActiveTournaments();
 
@@ -80,11 +81,6 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
 
   const joinedTournamentIds = new Set(participations.map((p: any) => p.tournament_id));
   const availableTournaments = tournaments.filter((t: any) => !joinedTournamentIds.has(t.id));
@@ -176,16 +172,8 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
   const confirmedParticipations = participations.filter((p: any) => p.status === 'confirmed');
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
-      <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-800 bg-slate-950">
-        <h1 className="text-xl font-bold">FestFlow</h1>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-sm text-slate-400 hidden sm:inline">{profile.email}</span>
-          <Button variant="secondary" onClick={handleLogout}>Sign Out</Button>
-        </div>
-      </header>
-
-      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl mx-auto w-full">
+    <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard">
+      <div className="max-w-4xl mx-auto">
         {view === 'home' && (
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-8">Welcome, {profile.full_name}!</h2>
@@ -275,7 +263,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
         {/* Create/Join Team Views (Omitted unchanged code below) */}
         {view === 'tournament_action' && selectedTournament && (
           <div className="max-w-lg mx-auto w-full text-center py-8">
-            <button onClick={resetView} className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors">← Back to Dashboard</button>
+            <button onClick={resetView} className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors">←</button>
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">{selectedTournament.name}</h2>
             <p className="text-slate-400 mb-8">Get started by creating or joining a team.</p>
 
@@ -317,7 +305,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
                   onClick={() => { setView('tournament_action'); setError(null); }}
                   className="text-slate-400 hover:text-slate-50 text-sm mb-4 transition-colors"
                 >
-                  ← Back
+                  ←
                 </button>
                 <h2 className="text-2xl font-bold mb-1">
                   {view === 'create' ? 'Create a Team' : 'Join a Team'}
@@ -349,7 +337,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

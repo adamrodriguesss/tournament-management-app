@@ -16,7 +16,7 @@ export async function getProfile(userId: string) {
   return { data, error };
 }
 
-/** Fetches a lightweight admin/referee profile (role, full_name, email). */
+/** Fetches a lightweight admin/event_manager profile (role, full_name, email). */
 export async function getRoleProfile(userId: string) {
   const { data, error } = await supabase
     .from("users")

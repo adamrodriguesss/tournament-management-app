@@ -304,9 +304,9 @@ Prevents inserting a match row for an event whose `format` is not `bracket`. Rai
 
 **For individual events (e.g., chess, solo dance)**
 1. Admin creates the event with `type = 'individual'`.
-2. Individual confirmed participants register themselves.
-3. An `event_registrations` row is created with `participant_id` set.
-4. Points earned by a participant are credited to their team.
+2. Team captain registers specific confirmed team members for individual events from the team view dashboard.
+3. An `event_registrations` row is created with `participant_id` set (corresponding to the selected team member).
+4. Points earned by a participant are credited to their team (found via their `participant_id`).
 
 ### 5.4 Bracket Events (Single Elimination)
 

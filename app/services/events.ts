@@ -79,6 +79,25 @@ export async function getEventRegistrationsByParticipant(participantId: string) 
   return { data: data || [], error };
 }
 
+/** Fetches event registrations for a list of participants. */
+export async function getEventRegistrationsByParticipants(participantIds: string[]) {
+  if (participantIds.length === 0) return { data: [], error: null };
+  const { data, error } = await supabase
+    .from("event_registrations")
+    .select("*, events(*)")
+    .in("participant_id", participantIds);
+  return { data: data || [], error };
+}
+
+/** Unregisters a participant from an individual event. */
+export async function unregisterParticipantFromEvent(registrationId: string) {
+  const { error } = await supabase
+    .from("event_registrations")
+    .delete()
+    .eq("id", registrationId);
+  return { error };
+}
+
 /** Fetches team participants selected for specific event registrations. */
 export async function getEventTeamParticipants(registrationIds: string[]) {
   if (registrationIds.length === 0) return { data: [], error: null };
@@ -138,4 +157,44 @@ export async function updateTeamEventRoster(registrationId: string, participantI
     .insert(payload);
     
   return { error: insertError };
+}
+
+/** Fetches all confirmed registrations for a specific event */
+export async function getConfirmedRegistrationsByEvent(eventId: string) {
+  const { data, error } = await supabase
+    .from("event_registrations")
+    .select(`
+      *,
+      team:team_id (*),
+      participant:participant_id (
+        *,
+        team:team_id (*),
+        user:user_id (*)
+      )
+    `)
+    .eq("event_id", eventId)
+    .eq("status", "confirmed");
+  return { data: data || [], error };
+}
+
+/** Calls the record_judged_results RPC to assign 1st, 2nd, and 3rd place */
+export async function recordJudgedResults(payload: {
+  p_event_id: string;
+  p_first_team_id: string;
+  p_second_team_id: string | null;
+  p_third_team_id: string | null;
+  p_recorded_by: string;
+}) {
+  const { error } = await supabase.rpc('record_judged_results', payload);
+  return { error };
+}
+
+/** Fetches existing results for an event */
+export async function getEventResults(eventId: string) {
+  const { data, error } = await supabase
+    .from("event_results")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("position", { ascending: true });
+  return { data: data || [], error };
 }

@@ -4,6 +4,7 @@ import { getSession, getProfile } from '../services/auth';
 import { getEventRegistrationDetails, getEventTeamParticipants, updateTeamEventRoster } from '../services/events';
 import { getParticipantsByTeamIds } from '../services/participants';
 import { Button } from '../components/ui/Button';
+import { AppLayout } from '../components/layout/AdminLayout';
 import type { Route } from './+types/event-roster';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -42,7 +43,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 export default function EventRoster({ loaderData }: { loaderData: any }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { registration, approvedMembers, currentRoster } = loaderData;
+  const { profile, registration, approvedMembers, currentRoster } = loaderData;
 
   const event = registration.events;
   const team = registration.teams;
@@ -94,10 +95,10 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col items-center py-10 px-4">
+    <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard">
       <div className="max-w-2xl w-full">
-        <button className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors inline-block" onClick={() => navigate('/dashboard')}>
-          &larr; Back to Dashboard
+        <button className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors inline-block font-medium" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
+          ←
         </button>
 
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 md:p-8">
@@ -173,7 +174,7 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-6 border-t border-slate-700">
-            <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+            <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
               Cancel
             </Button>
             <Button variant="primary" onClick={handleSave} disabled={loading}>
@@ -182,6 +183,6 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

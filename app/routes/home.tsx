@@ -12,7 +12,7 @@ export function meta({}: Route.MetaArgs) {
 export async function clientLoader() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    return redirect("/login");
+    return redirect("/tournaments");
   }
 
   const { data: profile } = await supabase
@@ -24,8 +24,8 @@ export async function clientLoader() {
   if (profile?.role === 'admin') {
     return redirect("/admin/dashboard");
   }
-  if (profile?.role === 'referee') {
-    return redirect("/referee");
+  if (profile?.role === 'event_manager') {
+    return redirect("/event-manager");
   }
   return redirect("/dashboard");
 }

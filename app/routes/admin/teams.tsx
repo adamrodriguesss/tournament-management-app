@@ -88,9 +88,9 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   };
 
   return (
-    <AdminLayout user={user} activeItem="Team Approvals">
+    <AdminLayout user={user} activeItem="Team Approvals" tournamentName={tournament.name}>
       <div className="mb-2">
-        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors mb-2 inline-block">← Back to Tournaments</button>
+        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors mb-2 inline-block font-medium">←</button>
       </div>
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold">{tournament.name}</h1>

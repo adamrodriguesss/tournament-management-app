@@ -114,6 +114,7 @@ Individual competitions within a tournament (cricket, dance, debate, etc.).
 | name | text | |
 | description | text | Nullable |
 | type | event_type | `team` or `individual` |
+| max_participants_per_team | int | Nullable, only used if `type = 'team'` |
 | format | event_format | `bracket` or `judged` |
 | points_first | int | Default: 10 |
 | points_second | int | Default: 6 |
@@ -137,6 +138,17 @@ Junction table — records which team or participant is competing in which event
 | registered_at | timestamptz | |
 
 Check constraint: either `team_id` or `participant_id` must be set, not both, not neither. For team events, `team_id` is set. For individual events, `participant_id` is set.
+
+#### `event_team_participants`
+Mapping table that links specific team members to a team's event registration.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| event_registration_id | uuid FK | References `event_registrations(id)` |
+| participant_id | uuid FK | References `participants(id)` |
+
+Unique constraint: `(event_registration_id, participant_id)` — a member can only be added once per registration.
 
 #### `matches`
 Single elimination bracket rows. Only created for `format = 'bracket'` events (enforced by a database trigger).
@@ -286,7 +298,9 @@ Prevents inserting a match row for an event whose `format` is not `bracket`. Rai
 **For team events (e.g., cricket, football)**
 1. Admin creates the event with `type = 'team'`.
 2. Confirmed teams can register for the event via their dashboard.
-3. An `event_registrations` row is created with `team_id` set.
+3. Team captain must add each participant for the event.
+4. Each event must have a maximum amount of participants from each team.
+5. An `event_registrations` row is created with `team_id` set.
 
 **For individual events (e.g., chess, solo dance)**
 1. Admin creates the event with `type = 'individual'`.

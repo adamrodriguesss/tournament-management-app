@@ -8,11 +8,12 @@ import {
   getPendingMembersForCaptains,
   createCaptainParticipation,
   joinTeam,
-  approveParticipant,
-  rejectParticipant,
 } from '../services/participants';
+import { getActiveEvents, getEventRegistrationsByTeams, registerTeamForEvent, getEventRegistrationsByParticipant, registerParticipantForEvent, getEventTeamParticipants } from '../services/events';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { TeamCard } from '../components/dashboard/TeamCard';
+import { EventCard } from '../components/dashboard/EventCard';
 
 export async function clientLoader() {
   const session = await getSession();
@@ -33,35 +34,43 @@ export async function clientLoader() {
 
   const { data: participations } = await getParticipationsByUser(session.user.id);
 
-  // Fetch pending participants for teams where the user is captain
   const captainTeamIds = participations
     .filter((p: any) => p.role_in_team === 'captain')
     .map((p: any) => p.team_id);
 
   const pendingMembers = await getPendingMembersForCaptains(captainTeamIds);
+  const { data: events } = await getActiveEvents();
+
+  const teamIds = participations.map((p: any) => p.team_id);
+  const { data: eventRegistrations } = await getEventRegistrationsByTeams(teamIds);
+
+  // Fetch participant IDs for this user across all teams
+  const userParticipantIds = participations.map((p: any) => p.id);
+
+  // Fetch team event roster entries where this user is selected
+  const teamRegIds = eventRegistrations.map((er: any) => er.id);
+  const { data: teamEventParticipants } = await getEventTeamParticipants(teamRegIds);
+
+  // Individual event registrations
+  const { data: individualRegistrations } = await getEventRegistrationsByParticipant(profile.id);
 
   return {
     profile,
     tournaments,
     participations,
-    pendingMembers
+    pendingMembers,
+    events,
+    eventRegistrations,
+    teamEventParticipants,
+    individualRegistrations,
+    userParticipantIds
   };
 }
 
 export default function Dashboard({ loaderData }: { loaderData: any }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { profile, tournaments, participations, pendingMembers } = loaderData;
-
-  const handleApproveParticipant = async (participantId: string) => {
-    await approveParticipant(participantId, profile.id);
-    revalidator.revalidate();
-  };
-
-  const handleRejectParticipant = async (participantId: string) => {
-    await rejectParticipant(participantId);
-    revalidator.revalidate();
-  };
+  const { profile, tournaments, participations, pendingMembers, events, eventRegistrations, teamEventParticipants, individualRegistrations, userParticipantIds } = loaderData;
 
   const [view, setView] = useState<'home' | 'tournament_action' | 'create' | 'join'>('home');
   const [selectedTournament, setSelectedTournament] = useState<any>(null);
@@ -153,83 +162,18 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     revalidator.revalidate();
   };
 
-  const TeamCard = ({ participation, team, tournament }: any) => {
-    const teamPendingMembers = pendingMembers.filter((m: any) => m.team_id === team.id);
-
-    return (
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">{team.name}</h3>
-            <p className="text-xs text-slate-400">{tournament.name}</p>
-          </div>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border w-fit ${team.status === 'confirmed'
-            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-            : team.status === 'disqualified'
-              ? 'bg-red-500/10 text-red-500 border-red-500/20'
-              : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-            }`}>
-            Team: {team.status}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Role</p>
-            <p className="capitalize">{participation.role_in_team}</p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Your Status</p>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${participation.status === 'confirmed'
-              ? 'bg-emerald-500/10 text-emerald-500'
-              : participation.status === 'rejected'
-                ? 'bg-red-500/10 text-red-500'
-                : 'bg-amber-500/10 text-amber-500'
-              }`}>
-              {participation.status}
-            </span>
-          </div>
-          {participation.role_in_team === 'captain' && (
-            <div className="col-span-2 mt-2">
-              <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Team Join Code</p>
-              <code className="bg-slate-950 px-3 py-1.5 rounded text-indigo-400 font-mono text-sm inline-block tracking-widest">{team.registration_token}</code>
-              <p className="text-xs text-slate-500 mt-1">Share this code with your teammates to let them join.</p>
-
-              {/* Pending Members */}
-              {teamPendingMembers.length > 0 && (
-                <div className="mt-4 border-t border-slate-700 pt-4">
-                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Pending Requests ({teamPendingMembers.length})</p>
-                  <div className="space-y-2">
-                    {teamPendingMembers.map((member: any) => (
-                      <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                        <div>
-                          <p className="text-sm font-medium">{member.users?.full_name}</p>
-                          <p className="text-xs text-slate-400">{member.users?.email}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleApproveParticipant(member.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectParticipant(member.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const handleRegisterTeam = async (eventId: string, teamId: string) => {
+    await registerTeamForEvent(eventId, teamId);
+    revalidator.revalidate();
   };
+
+  const handleRegisterIndividual = async (eventId: string, participantId: string) => {
+    await registerParticipantForEvent(eventId, participantId);
+    revalidator.revalidate();
+  };
+
+  // Group participations by tournament for Individual Events section
+  const confirmedParticipations = participations.filter((p: any) => p.status === 'confirmed');
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
@@ -252,11 +196,51 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
                 <h3 className="text-xl font-semibold mb-4 text-slate-300">My Teams</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {participations.map((p: any) => (
-                    <TeamCard key={p.id} participation={p} team={p.teams} tournament={p.tournaments} />
+                    <TeamCard 
+                      key={p.id} 
+                      participation={p} 
+                      team={p.teams} 
+                      tournament={p.tournaments} 
+                      pendingMembers={pendingMembers}
+                      profile={profile}
+                      events={events}
+                      eventRegistrations={eventRegistrations}
+                      onRegisterTeam={handleRegisterTeam}
+                    />
                   ))}
                 </div>
               </div>
             )}
+
+            {/* My Events Section - Unified view of team + individual events */}
+            {(() => {
+              // Team events where participant is on the roster
+              const myTeamEvents = (eventRegistrations || []).filter((er: any) => {
+                if (!er.events || er.events.type !== 'team') return false;
+                // Check if this user is in the roster for this registration
+                return (teamEventParticipants || []).some(
+                  (tp: any) => tp.event_registration_id === er.id && userParticipantIds.includes(tp.participant_id)
+                );
+              }).map((er: any) => ({ event: { ...er.events, tournaments: { name: er.events?.tournaments?.name || participations.find((p: any) => p.team_id === er.team_id)?.tournaments?.name } }, registration: er, type: 'team' as const }));
+
+              // Individual events the participant registered for
+              const myIndividualEvents = (individualRegistrations || []).filter((er: any) => er.events).map((er: any) => ({ event: er.events, registration: er, type: 'individual' as const }));
+
+              const allMyEvents = [...myTeamEvents, ...myIndividualEvents];
+
+              if (allMyEvents.length === 0) return null;
+
+              return (
+                <div className="mb-10">
+                  <h3 className="text-xl font-semibold mb-4 text-slate-300">My Events</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {allMyEvents.map((item, idx) => (
+                      <EventCard key={`${item.type}-${item.registration.id}-${idx}`} event={item.event} registration={item.registration} type={item.type} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Available Tournaments Section */}
             <div>
@@ -288,6 +272,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
           </div>
         )}
 
+        {/* Create/Join Team Views (Omitted unchanged code below) */}
         {view === 'tournament_action' && selectedTournament && (
           <div className="max-w-lg mx-auto w-full text-center py-8">
             <button onClick={resetView} className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors">← Back to Dashboard</button>

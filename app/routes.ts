@@ -8,5 +8,7 @@ export default [
   route("admin/dashboard", "routes/admin/dashboard.tsx"),
   route("admin/tournaments", "routes/admin/tournaments.tsx"),
   route("admin/tournaments/:id/teams", "routes/admin/teams.tsx"),
-  route("referee", "routes/referee/dashboard.tsx")
+  route("admin/tournaments/:id/events", "routes/admin/events.tsx"),
+  route("referee", "routes/referee/dashboard.tsx"),
+  route("dashboard/event-roster/:registrationId", "routes/event-roster.tsx")
 ] satisfies RouteConfig;

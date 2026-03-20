@@ -164,7 +164,10 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
                 {t.end_date && <span>📅 End: {t.end_date}</span>}
               </div>
               <div className="flex gap-3">
-                <Button variant="primary" onClick={() => navigate(`/admin/tournaments/${t.id}/teams`)}>
+                <Button variant="primary" onClick={() => navigate(`/admin/tournaments/${t.id}/events`)}>
+                  Manage Events
+                </Button>
+                <Button variant="secondary" onClick={() => navigate(`/admin/tournaments/${t.id}/teams`)}>
                   Manage Teams
                 </Button>
               </div>

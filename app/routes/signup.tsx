@@ -23,6 +23,7 @@ export default function SignUp() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

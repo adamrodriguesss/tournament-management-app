@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getProfile } from '../services/auth';
 import { getActiveTournaments } from '../services/tournaments';
-import { createTeam } from '../services/teams';
+import { createTeam, checkTeamExists } from '../services/teams';
 import {
   getParticipationsByUser,
   getPendingMembersForCaptains,
@@ -16,6 +16,7 @@ import { TeamCard } from '../components/dashboard/TeamCard';
 import { AppLayout } from '../components/layout/AdminLayout';
 import { EventCard } from '../components/dashboard/EventCard';
 
+// load all the things the dashboard needs before rendering 
 export async function clientLoader() {
   const session = await getSession();
   if (!session) {
@@ -100,6 +101,19 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     setLoading(true);
     setError(null);
 
+    const { data: existingTeam } = await checkTeamExists(
+  selectedTournament.id,
+  profile.department
+);
+
+  if (existingTeam) {
+    setError("Your department already has a team in this tournament.");
+    setLoading(false);
+    return;
+  }
+
+
+
     const token = Math.random().toString(36).substring(2, 10).toUpperCase();
 
     const { data: newTeam, error: teamError } = await createTeam({
@@ -112,10 +126,15 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     });
 
     if (teamError) {
-      setError(teamError.message);
-      setLoading(false);
-      return;
-    }
+  if (teamError.code === '23505') {
+    // Postgres unique violation
+    setError("A team from your department is already registered in this tournament.");
+  } else {
+    setError(teamError.message);
+  }
+  setLoading(false);
+  return;
+}
 
     const { error: partError } = await createCaptainParticipation({
       user_id: profile.id,

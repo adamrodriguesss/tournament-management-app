@@ -25,62 +25,90 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
   const statusLabel = (s: string) => s.replace(/_/g, ' ');
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
-      {/* Public Header */}
-      <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-slate-800 bg-slate-950">
-        <h1 className="text-xl font-bold text-indigo-400">FestFlow</h1>
-        <Button
-          variant={isLoggedIn ? 'primary' : 'secondary'}
-          onClick={() => navigate(isLoggedIn ? '/' : '/login')}
-        >
-          {isLoggedIn ? 'Go to Dashboard' : 'Sign In'}
-        </Button>
-      </header>
+  <div className="min-h-screen bg-pixel-black text-pixel-slate-light flex flex-col">
+    {/* Header */}
+    <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b-[3px] border-pixel-border bg-pixel-dark">
+      <div className="flex items-center gap-3">
+        <h1 className="font-[family-name:var(--font-pixel)] text-[15px] text-pixel-gold tracking-wider">
+          ★ FESTFLOW
+        </h1>
+      </div>
+      <Button
+        variant={isLoggedIn ? 'primary' : 'secondary'}
+        onClick={() => navigate(isLoggedIn ? '/' : '/login')}
+      >
+        {isLoggedIn ? 'Go to Dashboard' : 'Sign In'}
+      </Button>
+    </header>
 
-      <main className="flex-1 p-4 md:p-6 md:p-8 max-w-5xl mx-auto w-full">
-        {/* Hero */}
-        <div className="text-center mb-10 pt-4">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-3 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            University Tournaments
+    <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+      {/* Hero */}
+      <div className="text-center mb-10 pt-6">
+        <div className="flex items-center gap-3 justify-center mb-4">
+          <div className="h-[2px] w-12 bg-pixel-gold opacity-40" />
+          <h2 className="font-[family-name:var(--font-pixel)] text-[18px] md:text-[22px] text-pixel-gold tracking-wider leading-relaxed">
+            UNIVERSITY TOURNAMENTS
           </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            Explore live brackets, results, and team standings across all university events.
+          <div className="h-[2px] w-12 bg-pixel-gold opacity-40" />
+        </div>
+        <p className="text-xl text-pixel-slate max-w-xl mx-auto font-[family-name:var(--font-vt)]">
+          Explore live brackets, results, and team standings across all university events.
+        </p>
+      </div>
+
+      {/* Tournament Cards */}
+      {tournaments.length === 0 ? (
+        <div
+          className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center"
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <span className="text-5xl mb-4 block opacity-40">🏆</span>
+          <h3 className="font-[family-name:var(--font-pixel)] text-[14px] text-pixel-slate-light mb-2 leading-relaxed">
+            NO TOURNAMENTS YET
+          </h3>
+          <p className="text-xl text-pixel-slate font-[family-name:var(--font-vt)]">
+            Check back later for upcoming tournaments.
           </p>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tournaments.map((t: any) => (
+            <div
+              key={t.id}
+              onClick={() => navigate(`/tournaments/${t.id}`)}
+              className="bg-pixel-card border-[3px] border-pixel-border p-6 cursor-pointer relative
+                hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-100 group"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-[3px]"
+                style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+              />
 
-        {/* Tournament Cards */}
-        {tournaments.length === 0 ? (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
-            <span className="text-4xl mb-4 block">🏆</span>
-            <h3 className="text-lg font-semibold mb-1">No Tournaments Yet</h3>
-            <p className="text-slate-400 text-md">Check back later for upcoming tournaments.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {tournaments.map((t: any) => (
-              <div
-                key={t.id}
-                onClick={() => navigate(`/tournaments/${t.id}`)}
-                className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-indigo-500/50 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">{t.name}</h3>
-                  <span className={`text-base font-medium px-5 py-1 rounded-full border capitalize shrink-0 ${statusColor(t.status)}`}>
-                    {statusLabel(t.status)}
-                  </span>
-                </div>
-                {t.description && (
-                  <p className="text-md text-slate-400 mb-4 line-clamp-2">{t.description}</p>
-                )}
-                <div className="flex flex-wrap items-center gap-4 text-md text-slate-500">
-                  {t.start_date && <span>📅 {new Date(t.start_date).toLocaleDateString()}</span>}
-                  {t.end_date && <span>→ {new Date(t.end_date).toLocaleDateString()}</span>}
-                </div>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h3 className="font-[family-name:var(--font-pixel)] text-[13px] text-pixel-slate-light
+                  group-hover:text-pixel-gold transition-colors leading-relaxed tracking-wide">
+                  {t.name.toUpperCase()}
+                </h3>
+                <span className={`font-[family-name:var(--font-pixel)] text-[10px] px-3 py-1 border-2 shrink-0 tracking-wide leading-relaxed ${statusColor(t.status)}`}>
+                  {statusLabel(t.status).toUpperCase()}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
-  );
+
+              {t.description && (
+                <p className="text-xl font-[family-name:var(--font-vt)] text-pixel-slate mb-4 line-clamp-2">
+                  {t.description}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-4 text-lg font-[family-name:var(--font-vt)] text-pixel-slate border-t-2 border-pixel-border pt-3 mt-3">
+                {t.start_date && <span>📅 {new Date(t.start_date).toLocaleDateString()}</span>}
+                {t.end_date && <span>→ {new Date(t.end_date).toLocaleDateString()}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </main>
+  </div>
+);
 }

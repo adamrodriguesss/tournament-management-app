@@ -76,212 +76,332 @@ export default function TeamView({ loaderData }: { loaderData: any }) {
   };
 
   return (
-    <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard" contextTitle={team.tournaments?.name}>
-      <div className="max-w-4xl mx-auto">
-        <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors inline-block font-medium">
-          ←
-        </button>
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">{team.name}</h2>
-          <p className="text-slate-400">Tournament: {team.tournaments?.name}</p>
-        </div>
+  <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard" contextTitle={team.tournaments?.name}>
+    <div className="max-w-4xl mx-auto">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold mb-6 transition-colors tracking-wide inline-block"
+      >
+        ← BACK
+      </button>
 
-            {/* Event Management Section */}
-            {isCaptain && team.status === 'confirmed' && teamEvents.length > 0 && (
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                <h3 className="text-xl font-semibold mb-4 text-slate-300">Team Events</h3>
-                <div className="space-y-4">
-                  {teamEvents.map((event: any) => {
-                    const registration = eventRegistrations.find((er: any) => er.event_id === event.id);
-                    return (
-                      <div key={event.id} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
+      <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+        <h2 className="font-[family-name:var(--font-pixel)] text-[26px] text-pixel-gold leading-relaxed tracking-wide">
+          {team.name.toUpperCase()}
+        </h2>
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+          Tournament: {team.tournaments?.name}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+
+          {/* Team Events */}
+          {isCaptain && team.status === 'confirmed' && teamEvents.length > 0 && (
+            <div
+              className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-gold opacity-40" />
+              <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold mb-4 tracking-wide leading-relaxed">
+                TEAM EVENTS
+              </h3>
+              <div className="space-y-3">
+                {teamEvents.map((event: any) => {
+                  const registration = eventRegistrations.find((er: any) => er.event_id === event.id);
+                  return (
+                    <div
+                      key={event.id}
+                      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-pixel-dark border-2 border-pixel-border p-4"
+                      style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.3)' }}
+                    >
+                      <div>
+                        <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                          {event.name.toUpperCase()}
+                        </p>
+                        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+                          {event.max_participants_per_team
+                            ? `Max members: ${event.max_participants_per_team}`
+                            : 'Unlimited members'}
+                        </p>
+                      </div>
+                      {registration ? (
+                        <div className="flex flex-wrap items-center gap-3 shrink-0">
+                          <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-green/10 text-pixel-green-dim border border-pixel-green-dim tracking-wide">
+                            ✓ REGISTERED
+                          </span>
+                          <button
+                            onClick={() => navigate(`/dashboard/event-roster/${registration.id}`)}
+                            className="font-[family-name:var(--font-pixel)] text-[12px] px-3 py-2 border-2 border-pixel-cyan-dim text-pixel-cyan bg-pixel-cyan/5 hover:bg-pixel-cyan/10 transition-colors tracking-wide
+                              [box-shadow:2px_2px_0_var(--color-pixel-cyan-dim)] active:translate-x-[2px] active:translate-y-[2px] active:[box-shadow:none]"
+                          >
+                            MANAGE ROSTER →
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="shrink-0">
+                          <Button variant="primary" onClick={() => handleRegisterTeam(event.id)}>
+                            REGISTER TEAM
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Individual Events */}
+          {isCaptain && team.status === 'confirmed' && individualEvents.length > 0 && (
+            <div
+              className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-purple opacity-60" />
+              <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-purple mb-4 tracking-wide leading-relaxed">
+                INDIVIDUAL EVENTS
+              </h3>
+              <div className="space-y-3">
+                {individualEvents.map((event: any) => {
+                  const eventRegs = individualRegistrations.filter((er: any) => er.event_id === event.id);
+                  return (
+                    <div
+                      key={event.id}
+                      className="flex flex-col gap-3 bg-pixel-dark border-2 border-pixel-border p-4"
+                      style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.3)' }}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                         <div>
-                          <p className="font-medium">{event.name}</p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {event.max_participants_per_team ? `Max members: ${event.max_participants_per_team}` : 'Unlimited members'}
+                          <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                            {event.name.toUpperCase()}
+                          </p>
+                          <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+                            Individual Activity
                           </p>
                         </div>
-                        {registration ? (
-                          <div className="flex flex-wrap items-center gap-3 shrink-0">
-                            <span className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Registered</span>
-                            <button onClick={() => navigate(`/dashboard/event-roster/${registration.id}`)} className="text-sm font-medium px-4 py-2 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors border border-indigo-500/20">
-                              Manage Roster &rarr;
-                            </button>
+
+                        {eventRegs.length === 0 ? (
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <select
+                              className="
+                                bg-pixel-black border-2 border-pixel-border px-3 py-2
+                                font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate-light
+                                outline-none focus:border-pixel-cyan-dim
+                              "
+                              value={selectedMembers[event.id] || ''}
+                              onChange={(e) => setSelectedMembers({ ...selectedMembers, [event.id]: e.target.value })}
+                            >
+                              <option value="">Select member...</option>
+                              {confirmedMembers.map((m: any) => (
+                                <option key={m.id} value={m.id}>{m.users?.full_name}</option>
+                              ))}
+                            </select>
+                            <Button
+                              variant="primary"
+                              onClick={() => handleRegisterIndividual(event.id, selectedMembers[event.id])}
+                              disabled={!selectedMembers[event.id]}
+                            >
+                              REGISTER
+                            </Button>
                           </div>
                         ) : (
-                          <div className="shrink-0">
-                            <Button variant="primary" onClick={() => handleRegisterTeam(event.id)}>
-                              Register Team
-                            </Button>
+                          <div className="w-full sm:w-auto shrink-0 space-y-2">
+                            {eventRegs.map((reg: any) => {
+                              const participant = participants.find((p: any) => p.id === reg.participant_id);
+                              return (
+                                <div
+                                  key={reg.id}
+                                  className="flex items-center justify-between gap-4 bg-pixel-green/10 border-2 border-pixel-green-dim px-4 py-2"
+                                >
+                                  <span className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-green-dim flex items-center gap-2 leading-relaxed">
+                                    <span className="w-1.5 h-1.5 bg-pixel-green-dim inline-block animate-pulse" />
+                                    {participant?.users?.full_name}
+                                  </span>
+                                  <button
+                                    onClick={() => handleUnregisterIndividual(reg.id)}
+                                    className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-red hover:text-red-400 transition-colors cursor-pointer"
+                                    title="Remove from event"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Individual Event Management Section */}
-            {isCaptain && team.status === 'confirmed' && individualEvents.length > 0 && (
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                <h3 className="text-xl font-semibold mb-4 text-slate-300">Individual Events</h3>
-                <div className="space-y-4">
-                  {individualEvents.map((event: any) => {
-                    const eventRegs = individualRegistrations.filter((er: any) => er.event_id === event.id);
-
-                    return (
-                      <div key={event.id} className="flex flex-col gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                          <div>
-                            <p className="font-medium text-slate-200">{event.name}</p>
-                            <p className="text-xs text-slate-400 mt-1">Individual Activity</p>
-                          </div>
-
-                          {eventRegs.length === 0 ? (
-                            <div className="flex flex-wrap items-center gap-2 shrink-0">
-                              <select
-                                className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-colors"
-                                value={selectedMembers[event.id] || ''}
-                                onChange={(e) => setSelectedMembers({ ...selectedMembers, [event.id]: e.target.value })}
-                              >
-                                <option value="">Select member...</option>
-                                {confirmedMembers.map((m: any) => (
-                                  <option key={m.id} value={m.id}>{m.users?.full_name}</option>
-                                ))}
-                              </select>
-                              <Button
-                                variant="primary"
-                                onClick={() => handleRegisterIndividual(event.id, selectedMembers[event.id])}
-                                disabled={!selectedMembers[event.id]}
-                              >
-                                Register
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="w-full sm:w-auto shrink-0">
-                              {eventRegs.map((reg: any) => {
-                                const participant = participants.find((p: any) => p.id === reg.participant_id);
-                                return (
-                                  <div key={reg.id} className="flex items-center justify-between gap-4 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-lg">
-                                    <span className="text-sm font-medium text-emerald-500 flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                      {participant?.users?.full_name}
-                                    </span>
-                                    <button
-                                      onClick={() => handleUnregisterIndividual(reg.id)}
-                                      className="text-lg cursor-pointer font-semibold text-red-500 hover:text-red-400 transition-colors p-1"
-                                      title="Remove from event"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-xl font-semibold mb-4 text-slate-300">Team Members ({confirmedMembers.length})</h3>
-              <div className="space-y-3">
-                {confirmedMembers.map((member: any) => (
-                  <div key={member.id} className="flex justify-between items-center bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
-                    <div>
-                      <p className="font-medium">{member.users?.full_name}</p>
-                      <p className="text-xs text-slate-400">{member.users?.department || 'Member'}</p>
                     </div>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${member.role_in_team === 'captain' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-500 border border-gray-500/20'} capitalize`}>
-                      {member.role_in_team}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Team Members */}
+          <div
+            className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-cyan-dim opacity-50" />
+            <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-cyan-dim mb-4 tracking-wide leading-relaxed">
+              TEAM MEMBERS ({confirmedMembers.length})
+            </h3>
+            <div className="space-y-2">
+              {confirmedMembers.map((member: any) => (
+                <div
+                  key={member.id}
+                  className="flex justify-between items-center bg-pixel-dark border-2 border-pixel-border p-4"
+                  style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.3)' }}
+                >
+                  <div>
+                    <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                      {member.users?.full_name}
+                    </p>
+                    <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
+                      {member.users?.department || 'Member'}
+                    </p>
+                  </div>
+                  <span className={`
+                    font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border tracking-wide capitalize
+                    ${member.role_in_team === 'captain'
+                      ? 'bg-pixel-gold/10 text-pixel-gold border-pixel-gold-dark'
+                      : 'bg-pixel-slate/10 text-pixel-slate border-pixel-border'}
+                  `}>
+                    {member.role_in_team.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pending Requests */}
+          {isCaptain && pendingMembers.length > 0 && (
+            <div
+              className="bg-pixel-card border-[3px] border-amber-500/50 p-6 relative"
+              style={{ boxShadow: '3px 3px 0 rgba(245,158,11,0.3)' }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500 opacity-60" />
+              <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-amber-400 mb-4 tracking-wide leading-relaxed">
+                PENDING REQUESTS ({pendingMembers.length})
+              </h3>
+              <div className="space-y-2">
+                {pendingMembers.map((member: any) => (
+                  <div
+                    key={member.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-pixel-dark border-2 border-pixel-border p-4"
+                  >
+                    <div>
+                      <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                        {member.users?.full_name}
+                      </p>
+                      <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
+                        {member.users?.email}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => handleApprove(member.id)}
+                        className="font-[family-name:var(--font-pixel)] text-[12px] px-3 py-1.5 border-2 border-pixel-green-dim text-pixel-green-dim bg-pixel-green/5 hover:bg-pixel-green/10 transition-colors tracking-wide
+                          [box-shadow:2px_2px_0_var(--color-pixel-green-dim)] active:translate-x-[2px] active:translate-y-[2px] active:[box-shadow:none]"
+                      >
+                        APPROVE
+                      </button>
+                      <button
+                        onClick={() => handleReject(member.id)}
+                        className="font-[family-name:var(--font-pixel)] text-[12px] px-3 py-1.5 border-2 border-pixel-red text-pixel-red bg-pixel-red/5 hover:bg-pixel-red/10 transition-colors tracking-wide
+                          [box-shadow:2px_2px_0_#a01e36] active:translate-x-[2px] active:translate-y-[2px] active:[box-shadow:none]"
+                      >
+                        REJECT
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rejected Requests */}
+          {isCaptain && rejectedMembers.length > 0 && (
+            <div
+              className="bg-pixel-card border-[3px] border-pixel-border p-6 relative opacity-60"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-red mb-4 tracking-wide leading-relaxed">
+                REJECTED ({rejectedMembers.length})
+              </h3>
+              <div className="space-y-2">
+                {rejectedMembers.map((member: any) => (
+                  <div
+                    key={member.id}
+                    className="flex justify-between items-center bg-pixel-dark border-2 border-pixel-border p-4"
+                  >
+                    <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate leading-relaxed">
+                      {member.users?.full_name}
+                    </p>
+                    <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 bg-pixel-red/10 text-pixel-red border border-pixel-red tracking-wide">
+                      REJECTED
                     </span>
                   </div>
                 ))}
               </div>
             </div>
+          )}
+        </div>
 
-            {isCaptain && pendingMembers.length > 0 && (
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                <h3 className="text-xl font-semibold mb-4 text-slate-300">Pending Requests ({pendingMembers.length})</h3>
-                <div className="space-y-3">
-                  {pendingMembers.map((member: any) => (
-                    <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
-                      <div>
-                        <p className="font-medium">{member.users?.full_name}</p>
-                        <p className="text-xs text-slate-400">{member.users?.email}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleApprove(member.id)} className="text-sm font-medium px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors">
-                          Approve
-                        </button>
-                        <button onClick={() => handleReject(member.id)} className="text-sm font-medium px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {isCaptain && rejectedMembers.length > 0 && (
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 opacity-75">
-                <h3 className="text-xl font-semibold mb-4 text-slate-300">Rejected Requests ({rejectedMembers.length})</h3>
-                <div className="space-y-3">
-                  {rejectedMembers.map((member: any) => (
-                    <div key={member.id} className="flex justify-between items-center bg-slate-900/50 p-4 rounded-lg border border-slate-700/50">
-                      <div>
-                        <p className="font-medium text-slate-400">{member.users?.full_name}</p>
-                      </div>
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
-                        Rejected
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-4 text-slate-300">Team Info</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Status</p>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full border w-fit capitalize ${team.status === 'confirmed'
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <div
+            className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-[3px]"
+              style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+            />
+            <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light mb-5 tracking-wide leading-relaxed">
+              TEAM INFO
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Status</p>
+                <span className={`
+                  font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border tracking-wide capitalize
+                  ${team.status === 'confirmed'
+                    ? 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim'
                     : team.status === 'disqualified'
-                      ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                      : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                    }`}>
-                    {team.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Department</p>
-                  <p className="text-sm text-slate-300">{team.department}</p>
-                </div>
-                {isCaptain && (
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Join Code</p>
-                    <code className="bg-slate-950 px-3 py-1.5 rounded text-indigo-400 font-mono text-sm inline-block tracking-widest">{team.registration_token}</code>
-                    <p className="text-xs text-slate-500 mt-2">Share this code with teammates.</p>
-                  </div>
-                )}
+                    ? 'bg-pixel-red/10 text-pixel-red border-pixel-red'
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500'}
+                `}>
+                  {team.status.toUpperCase()}
+                </span>
               </div>
+
+              <div>
+                <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Department</p>
+                <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate-light">{team.department}</p>
+              </div>
+
+              {isCaptain && (
+                <div>
+                  <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-2">Join Code</p>
+                  <code
+                    className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-cyan bg-pixel-black border-2 border-pixel-border px-3 py-2 inline-block tracking-[6px]"
+                    style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.5)' }}
+                  >
+                    {team.registration_token}
+                  </code>
+                  <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-2">
+                    Share this code with teammates.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-    </AppLayout>
-  );
+    </div>
+  </AppLayout>
+);
 }

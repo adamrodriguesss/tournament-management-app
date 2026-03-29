@@ -42,73 +42,95 @@ export default function EventManagerDashboard({ loaderData }: { loaderData: Load
   const { profile, events } = loaderData;
 
   return (
-    <AppLayout user={{ ...profile, role: 'event_manager' }} activeItem="Dashboard">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold">Event Manager Dashboard</h2>
-          <p className="text-slate-400 mt-1">Welcome back, {profile.full_name || 'Event Manager'}. Here are events awaiting scores.</p>
-        </div>
+  <AppLayout user={{ ...profile, role: 'event_manager' }} activeItem="Dashboard">
+    <div className="max-w-4xl mx-auto">
 
-        {/* Events List */}
-        {events.length === 0 ? (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
-            <span className="text-4xl mb-4 block">📋</span>
-            <h3 className="text-lg font-semibold mb-1">No Events Assigned</h3>
-            <p className="text-slate-400 text-sm">There are no active events requiring score entry at this time.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-colors duration-200"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold">{event.name}</h3>
-                    {event.tournaments && (
-                      <p className="text-xs text-slate-500">{event.tournaments.name}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                      event.format === 'bracket'
-                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                        : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                    }`}>
-                      {event.format}
-                    </span>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
-                      event.status === 'completed'
-                        ? 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                        : event.status === 'ongoing'
-                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                    }`}>
-                      {event.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm text-slate-400">
-                  {event.venue && <span>📍 {event.venue}</span>}
-                  {event.scheduled_at && (
-                    <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>
+      <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+        <h2 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
+          EVENT MANAGER DASHBOARD
+        </h2>
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+          Welcome back, {profile.full_name || 'Event Manager'}. Here are events awaiting scores.
+        </p>
+      </div>
+
+      {events.length === 0 ? (
+        <div
+          className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center"
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <span className="text-5xl mb-4 block opacity-40">📋</span>
+          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">
+            NO EVENTS ASSIGNED
+          </h3>
+          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
+            There are no active events requiring score entry at this time.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="bg-pixel-card border-[3px] border-pixel-border p-5 relative hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-100"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-cyan-dim opacity-60" />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
+                    {event.name.toUpperCase()}
+                  </h3>
+                  {event.tournaments && (
+                    <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-0.5">
+                      {event.tournaments.name}
+                    </p>
                   )}
-                  <span className="capitalize">📌 {event.type} event</span>
                 </div>
-                <div className="mt-4">
-                  <Button
-                    variant={event.status === 'completed' ? 'secondary' : 'primary'}
-                    onClick={() => navigate(`/admin/events/${event.id}/${event.format === 'bracket' ? 'bracket' : 'results'}`)}
-                  >
-                    {event.status === 'completed' ? 'Edit Scores' : 'Enter Scores'}
-                  </Button>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Format badge */}
+                  <span className={`
+                    font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border tracking-wide
+                    ${event.format === 'bracket'
+                      ? 'bg-pixel-cyan/10 text-pixel-cyan-dim border-pixel-cyan-dim'
+                      : 'bg-pixel-purple/10 text-pixel-purple border-pixel-purple'}
+                  `}>
+                    {event.format.toUpperCase()}
+                  </span>
+
+                  {/* Status badge */}
+                  <span className={`
+                    font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border tracking-wide
+                    ${event.status === 'completed'
+                      ? 'bg-pixel-slate/10 text-pixel-slate border-pixel-border'
+                      : event.status === 'ongoing'
+                      ? 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500'}
+                  `}>
+                    {event.status.toUpperCase()}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </AppLayout>
-  );
+
+              <div className="flex flex-wrap gap-4 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate mb-4">
+                {event.venue && <span>📍 {event.venue}</span>}
+                {event.scheduled_at && <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>}
+                <span className="capitalize">📌 {event.type} event</span>
+              </div>
+
+              <Button
+                variant={event.status === 'completed' ? 'secondary' : 'primary'}
+                onClick={() => navigate(`/admin/events/${event.id}/${event.format === 'bracket' ? 'bracket' : 'results'}`)}
+              >
+                {event.status === 'completed' ? 'EDIT SCORES' : 'ENTER SCORES'}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </AppLayout>
+);
 }

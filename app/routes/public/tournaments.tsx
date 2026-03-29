@@ -27,7 +27,7 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
       {/* Public Header */}
-      <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-800 bg-slate-950">
+      <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-slate-800 bg-slate-950">
         <h1 className="text-xl font-bold text-indigo-400">FestFlow</h1>
         <Button
           variant={isLoggedIn ? 'primary' : 'secondary'}
@@ -37,10 +37,10 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
         </Button>
       </header>
 
-      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-4 md:p-6 md:p-8 max-w-5xl mx-auto w-full">
         {/* Hero */}
         <div className="text-center mb-10 pt-4">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-3 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-3 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
             University Tournaments
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
@@ -53,7 +53,7 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
             <span className="text-4xl mb-4 block">🏆</span>
             <h3 className="text-lg font-semibold mb-1">No Tournaments Yet</h3>
-            <p className="text-slate-400 text-sm">Check back later for upcoming tournaments.</p>
+            <p className="text-slate-400 text-md">Check back later for upcoming tournaments.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -65,14 +65,14 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <h3 className="text-lg font-bold group-hover:text-indigo-400 transition-colors">{t.name}</h3>
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full border capitalize shrink-0 ${statusColor(t.status)}`}>
+                  <span className={`text-base font-medium px-5 py-1 rounded-full border capitalize shrink-0 ${statusColor(t.status)}`}>
                     {statusLabel(t.status)}
                   </span>
                 </div>
                 {t.description && (
-                  <p className="text-sm text-slate-400 mb-4 line-clamp-2">{t.description}</p>
+                  <p className="text-md text-slate-400 mb-4 line-clamp-2">{t.description}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-4 text-md text-slate-500">
                   {t.start_date && <span>📅 {new Date(t.start_date).toLocaleDateString()}</span>}
                   {t.end_date && <span>→ {new Date(t.end_date).toLocaleDateString()}</span>}
                 </div>

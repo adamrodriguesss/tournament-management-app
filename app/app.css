@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap'); 
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
@@ -12,4 +13,56 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+} */
+
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@import "tailwindcss";
+body {
+@media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+
+  background-color: #0a0a0f;
+  color: #ccd6f6;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+@theme {
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-vt: 'VT323', monospace;
+
+
+  --color-pixel-black: #0a0a0f;
+  --color-pixel-dark: #12121a;
+  --color-pixel-panel: #1a1a2e;
+  --color-pixel-card: #16213e;
+  --color-pixel-border: #0f3460;
+  --color-pixel-gold: #e2b714;
+  --color-pixel-gold-dark: #c49a0a;
+  --color-pixel-cyan: #00f5ff;
+  --color-pixel-cyan-dim: #00b8c1;
+  --color-pixel-purple: #a855f7;
+  --color-pixel-green: #00ff41;
+  --color-pixel-green-dim: #00b82e;
+  --color-pixel-red: #ff2d55;
+  --color-pixel-slate: #8892b0;
+  --color-pixel-slate-light: #ccd6f6;
+}
+
+.pixel-heading {
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  line-height: 2;
+  letter-spacing: 0.05em;
+}
+
+/* Pixel label — for ALL small labels, badges, nav items, button text */
+.pixel-label {
+  font-family: var(--font-pixel);
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: 0.08em;
 }

@@ -36,43 +36,47 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Welcome Back" subtitle="Sign in to your account">
-      <form onSubmit={handleLogin} className="space-y-6">
-        {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-500">
-            {error}
-          </div>
-        )}
-        <div className="space-y-4">
-          <Input 
-            label="Email Address" 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)}
-            required 
-            placeholder="you@university.edu"
-          />
-          <Input 
-            label="Password" 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)}
-            required 
-            placeholder="••••••••"
-          />
-        </div>
-        
-        <Button fullWidth type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign In'}
-        </Button>
-        
-        <div className="text-center mt-6">
-          <span className="text-slate-400 text-sm">Don't have an account? </span>
-          <NavLink to="/signup" className="text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-medium">
-            Sign up
-          </NavLink>
-        </div>
-      </form>
-    </AuthLayout>
+    <AuthLayout title="WELCOME BACK" subtitle="Insert coin to continue">
+  <form onSubmit={handleLogin} className="space-y-5">
+    {error && (
+      <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[10px] text-red-500 tracking-wide leading-relaxed">
+        ⚠ {error}
+      </div>
+    )}
+
+    <div className="space-y-4">
+      <Input
+        label="Email Address"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        placeholder="you@university.edu"
+      />
+      <Input
+        label="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        placeholder="••••••••"
+      />
+    </div>
+
+    <Button fullWidth type="submit" disabled={loading}>
+      {loading ? 'LOADING...' : 'SIGN IN'}
+    </Button>
+
+    <div className="text-center mt-6 border-t-2 border-[#0f3460] pt-5">
+      <span className="text-[#8892b0] font-['VT323'] text-lg">Don't have an account? </span>
+      <NavLink
+        to="/signup"
+        className="font-['Press_Start_2P'] text-[10px] text-[#e2b714] hover:text-[#00f5ff] transition-colors tracking-wide"
+      >
+        SIGN UP
+      </NavLink>
+    </div>
+  </form>
+</AuthLayout>
   );
 }

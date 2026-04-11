@@ -107,151 +107,155 @@ export default function AdminJudgedResults({ loaderData }: { loaderData: any }) 
     
     setLoading(false);
   };
+return (
+  <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
+    <div className="mb-4">
+      <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}
+        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
+        ← BACK
+      </button>
+    </div>
 
-  return (
-    <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
-      <div className="mb-4">
-        <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)} className="text-slate-400 hover:text-slate-50 text-sm transition-colors inline-block font-medium">
-          ←
-        </button>
-      </div>
+    <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+      <h1 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
+        {event.name.toUpperCase()} RESULTS
+      </h1>
+      <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+        {event.tournaments?.name} — Judged Event
+      </p>
+    </div>
 
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">{event.name} Results</h1>
-        <p className="text-slate-400 mt-1">{event.tournaments?.name} — Judged Event</p>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Main Form */}
+      <div className="md:col-span-2 space-y-6">
+        <div
+          className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px]"
+            style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+          />
+          <h2 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold mb-5 flex items-center gap-2 leading-relaxed tracking-wide">
+            🏆 ENTER RESULTS
+          </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <span className="text-2xl">🏆</span> Enter Results
-            </h2>
-            
-            {registrations.length === 0 ? (
-              <div className="text-center py-6 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                {regError ? (
-                  <p className="text-red-400">Error fetching registrations: {JSON.stringify(regError)}</p>
-                ) : (
-                  <>
-                    <p className="text-slate-400">No confirmed registrations yet.</p>
-                    <p className="text-sm text-slate-500 mt-1">Teams must register before results can be entered.</p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-400 font-medium">
-                    {error}
+          {registrations.length === 0 ? (
+            <div className="text-center py-6 bg-pixel-dark border-2 border-pixel-border">
+              {regError ? (
+                <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-red leading-relaxed">
+                  Error fetching registrations.
+                </p>
+              ) : (
+                <>
+                  <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate leading-relaxed mb-2">
+                    NO CONFIRMED REGISTRATIONS YET.
+                  </p>
+                  <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate">
+                    Teams must register before results can be entered.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">⚠ {error}</div>
+              )}
+              {success && (
+                <div className="border-2 border-pixel-green-dim bg-pixel-green/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-green-dim tracking-wide leading-relaxed">✓ {success}</div>
+              )}
+
+              <div className="space-y-3">
+                {/* 1st Place */}
+                <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-amber-500/10 border-2 border-amber-500/40 p-4">
+                  <div className="sm:w-32 shrink-0">
+                    <span className="font-[family-name:var(--font-pixel)] text-[10px] text-amber-400 leading-relaxed">🥇 1ST PLACE</span>
+                    <p className="font-[family-name:var(--font-vt)] text-[24px] text-amber-400/70 mt-0.5">{event.points_first} pts</p>
                   </div>
-                )}
-                {success && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-lg text-sm text-emerald-400 font-medium">
-                    {success}
-                  </div>
-                )}
+                  <select value={firstPlace} onChange={(e) => setFirstPlace(e.target.value)} required
+                    className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-amber-500/50 [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
+                    <option value="">-- Select Winner --</option>
+                    {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
+                  </select>
+                </div>
 
-                <div className="space-y-4">
-                  {/* 1st Place — always shown */}
-                  <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
+                {/* 2nd Place */}
+                {registrations.length >= 2 && (
+                  <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-pixel-slate/10 border-2 border-pixel-slate/30 p-4">
                     <div className="sm:w-32 shrink-0">
-                      <span className="font-bold text-amber-500">🥇 1st Place</span>
-                      <p className="text-xs text-amber-500/70 mt-0.5">{event.points_first} pts</p>
+                      <span className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">🥈 2ND PLACE</span>
+                      <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-0.5">{event.points_second} pts</p>
                     </div>
-                    <select
-                      value={firstPlace}
-                      onChange={(e) => setFirstPlace(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-amber-500/50"
-                      required
-                    >
-                      <option value="">-- Select Winner --</option>
-                      {options.map((opt: any) => (
-                        <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
-                      ))}
+                    <select value={secondPlace} onChange={(e) => setSecondPlace(e.target.value)}
+                      className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-pixel-slate [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
+                      <option value="">-- Optional --</option>
+                      {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
                     </select>
                   </div>
+                )}
 
-                  {/* 2nd Place — shown only when 2+ registrations */}
-                  {registrations.length >= 2 && (
-                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-400/10 border border-slate-400/20 p-4 rounded-lg">
-                      <div className="sm:w-32 shrink-0">
-                        <span className="font-bold text-slate-300">🥈 2nd Place</span>
-                        <p className="text-xs text-slate-400/70 mt-0.5">{event.points_second} pts</p>
-                      </div>
-                      <select
-                        value={secondPlace}
-                        onChange={(e) => setSecondPlace(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-slate-400/50"
-                      >
-                        <option value="">-- Optional --</option>
-                        {options.map((opt: any) => (
-                          <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
-                        ))}
-                      </select>
+                {/* 3rd Place */}
+                {registrations.length >= 3 && (
+                  <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-orange-700/10 border-2 border-orange-700/30 p-4">
+                    <div className="sm:w-32 shrink-0">
+                      <span className="font-[family-name:var(--font-pixel)] text-[10px] text-orange-400 leading-relaxed">🥉 3RD PLACE</span>
+                      <p className="font-[family-name:var(--font-vt)] text-[24px] text-orange-400/70 mt-0.5">{event.points_third} pts</p>
                     </div>
-                  )}
+                    <select value={thirdPlace} onChange={(e) => setThirdPlace(e.target.value)}
+                      className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-orange-500/50 [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
+                      <option value="">-- Optional --</option>
+                      {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
 
-                  {/* 3rd Place — shown only when 3+ registrations */}
-                  {registrations.length >= 3 && (
-                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-orange-700/10 border border-orange-700/20 p-4 rounded-lg">
-                      <div className="sm:w-32 shrink-0">
-                        <span className="font-bold text-orange-400">🥉 3rd Place</span>
-                        <p className="text-xs text-orange-400/70 mt-0.5">{event.points_third} pts</p>
-                      </div>
-                      <select
-                        value={thirdPlace}
-                        onChange={(e) => setThirdPlace(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:outline-none focus:border-orange-500/50"
-                      >
-                        <option value="">-- Optional --</option>
-                        {options.map((opt: any) => (
-                          <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <Button type="submit" variant="primary" disabled={loading}>
-                    {loading ? 'Saving...' : 'Save Results'}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </div>
+              <div className="pt-2 flex justify-end">
+                <Button type="submit" variant="primary" disabled={loading}>
+                  {loading ? 'SAVING...' : 'SAVE RESULTS'}
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
+      </div>
 
-        <div className="space-y-6">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4 text-slate-300">Event Info</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Status</p>
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 capitalize">
-                  {event.status}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Format & Type</p>
-                <p className="text-sm text-slate-300 capitalize">{event.format} • {event.type}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Registered Teams</p>
-                <p className="text-sm text-slate-300">{registrations.length} total</p>
-              </div>
+      {/* Sidebar Info */}
+      <div>
+        <div
+          className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-cyan-dim" />
+          <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light mb-5 tracking-wide leading-relaxed">
+            EVENT INFO
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Status</p>
+              <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-green/10 border border-pixel-green-dim text-pixel-green-dim tracking-wide capitalize">
+                {event.status.toUpperCase()}
+              </span>
             </div>
-            
-            <div className="mt-6 pt-6 border-t border-slate-700/50">
-              <p className="text-sm text-slate-400">
-                Judged event results allocate points immediately upon saving. 
-                You can correct mistakes anytime by simply changing the selections and saving again.
+            <div>
+              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Format & Type</p>
+              <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate-light capitalize">
+                {event.format} · {event.type}
               </p>
             </div>
+            <div>
+              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Registered Teams</p>
+              <p className="font-[family-name:var(--font-pixel)] text-[24px] text-pixel-cyan">{registrations.length}</p>
+            </div>
+          </div>
+          <div className="mt-6 pt-5 border-t-2 border-pixel-border">
+            <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate leading-relaxed">
+              Judged event results allocate points immediately upon saving. You can correct mistakes anytime by changing selections and saving again.
+            </p>
           </div>
         </div>
       </div>
-    </AdminLayout>
-  );
+    </div>
+  </AdminLayout>
+);
 }

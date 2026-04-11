@@ -88,139 +88,167 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
   };
 
   return (
-    <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
-      <div className="mb-4">
-        <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)} className="text-slate-400 hover:text-slate-50 text-sm transition-colors inline-block font-medium">
-          ←
-        </button>
-      </div>
+  <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
+    <div className="mb-4">
+      <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}
+        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
+        ← BACK
+      </button>
+    </div>
 
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">{event.name} Bracket</h1>
-          <p className="text-slate-400 mt-1">{event.tournaments?.name} — Single Elimination</p>
-        </div>
-        
-        {matches.length === 0 && (
-          <Button variant="primary" onClick={handleGenerate} disabled={generating}>
-            {generating ? 'Generating...' : '⚡ Generate Bracket'}
-          </Button>
-        )}
+    <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="border-l-4 border-pixel-gold pl-4 py-1">
+        <h1 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
+          {event.name.toUpperCase()} BRACKET
+        </h1>
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+          {event.tournaments?.name} — Single Elimination
+        </p>
       </div>
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-500 font-medium">
-          {error}
-        </div>
+      {matches.length === 0 && (
+        <Button variant="primary" onClick={handleGenerate} disabled={generating}>
+          {generating ? 'GENERATING...' : '⚡ GENERATE BRACKET'}
+        </Button>
       )}
+    </div>
 
-      {matches.length === 0 ? (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
-          <span className="text-5xl mb-4 block opacity-50">🏆</span>
-          <h3 className="text-xl font-semibold mb-2">Bracket Not Generated</h3>
-          <p className="text-slate-400 max-w-md mx-auto mb-6 text-sm">
-            Teams must be fully registered and confirmed before generating the bracket. Once generated, the setup is permanent!
-          </p>
-        </div>
-      ) : (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 overflow-x-auto min-h-[500px]">
-          <div className="flex gap-12 min-w-max">
-            {rounds.map((round: any) => {
-              const roundMatches = matches.filter((m: any) => m.round_number === round);
-              const isFinal = roundMatches.length === 1 && round === rounds[rounds.length - 1];
+    {error && (
+      <div className="mb-6 border-2 border-pixel-red bg-pixel-red/10 p-4 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">
+        ⚠ {error}
+      </div>
+    )}
 
-              return (
-                <div key={round} className="flex flex-col gap-6 w-64 shrink-0 justify-around">
-                  <h3 className="text-center font-bold text-slate-400 uppercase tracking-widest text-xs mb-2">
-                    {isFinal ? 'Final' : `Round ${round}`}
-                  </h3>
-                  
-                  {roundMatches.map((match: any, index: number) => (
-                    <div 
-                      key={match.id} 
-                      className={`
-                        border rounded-lg overflow-hidden flex flex-col transition-colors
-                        ${match.status === 'completed' ? 'border-indigo-500/30 bg-indigo-500/5' : 'border-slate-700 bg-slate-900'}
-                        ${match.team_a_id && match.team_b_id && match.status !== 'completed' ? 'cursor-pointer hover:border-slate-500' : ''}
-                      `}
-                      onClick={() => openScoreModal(match)}
-                    >
-                      {/* Team A */}
-                      <div className={`p-3 flex justify-between items-center border-b border-slate-800 ${match.winner_id === match.team_a_id ? 'bg-indigo-500/10 text-indigo-400 font-bold' : 'text-slate-300'}`}>
-                        <span className="truncate pr-2 text-sm">{match.team_a?.name || <span className="text-slate-600 italic">TBD</span>}</span>
-                        <span className="font-mono">{match.score_a ?? '-'}</span>
-                      </div>
-                      
-                      {/* Team B */}
-                      <div className={`p-3 flex justify-between items-center ${match.winner_id === match.team_b_id ? 'bg-indigo-500/10 text-indigo-400 font-bold' : 'text-slate-300'}`}>
-                        <span className="truncate pr-2 text-sm">{match.team_b?.name || <span className="text-slate-600 italic">TBD</span>}</span>
-                        <span className="font-mono">{match.score_b ?? '-'}</span>
-                      </div>
-                      
-                      {/* Bye Indicator */}
-                      {match.status === 'completed' && (!match.team_a_id || !match.team_b_id) && (
-                        <div className="p-1.5 text-[10px] text-center bg-slate-800 text-slate-500 uppercase tracking-widest font-bold">
-                          Automatic Bye
-                        </div>
-                      )}
+    {matches.length === 0 ? (
+      <div className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+        <span className="text-5xl mb-4 block opacity-30">🏆</span>
+        <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-3 leading-relaxed">
+          BRACKET NOT GENERATED
+        </h3>
+        <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate max-w-md mx-auto">
+          Teams must be fully registered and confirmed before generating the bracket. Once generated, the setup is permanent!
+        </p>
+      </div>
+    ) : (
+      <div
+        className="bg-pixel-card border-[3px] border-pixel-border p-6 overflow-x-auto min-h-[500px]"
+        style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+      >
+        <div className="flex gap-10 min-w-max">
+          {rounds.map((round: any) => {
+            const roundMatches = matches.filter((m: any) => m.round_number === round);
+            const isFinal = roundMatches.length === 1 && round === rounds[rounds.length - 1];
+
+            return (
+              <div key={round} className="flex flex-col gap-6 w-60 shrink-0 justify-around">
+                <h3 className="text-center font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold uppercase tracking-[3px] mb-2">
+                  {isFinal ? '★ FINAL ★' : `ROUND ${round}`}
+                </h3>
+
+                {roundMatches.map((match: any) => (
+                  <div
+                    key={match.id}
+                    className={`
+                      border-[3px] overflow-hidden flex flex-col transition-all
+                      ${match.status === 'completed'
+                        ? 'border-pixel-cyan-dim bg-pixel-cyan/5'
+                        : 'border-pixel-border bg-pixel-dark'}
+                      ${match.team_a_id && match.team_b_id && match.status !== 'completed'
+                        ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-pixel-slate'
+                        : ''}
+                    `}
+                    style={{ boxShadow: '2px 2px 0 var(--color-pixel-border)' }}
+                    onClick={() => openScoreModal(match)}
+                  >
+                    {/* Team A */}
+                    <div className={`p-3 flex justify-between items-center border-b-2 border-pixel-border
+                      ${match.winner_id === match.team_a_id
+                        ? 'bg-pixel-gold/10 text-pixel-gold'
+                        : 'text-pixel-slate-light'}
+                    `}>
+                      <span className="font-[family-name:var(--font-vt)] text-[26px] truncate pr-2">
+                        {match.team_a?.name || <span className="text-pixel-border italic">TBD</span>}
+                      </span>
+                      <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-cyan">
+                        {match.score_a ?? '-'}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* Score Modal */}
-      {selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-4">Record Match Score</h3>
-            
-            <form onSubmit={handleScoreSubmit}>
-              <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between gap-4">
-                  <label className="text-sm font-medium text-slate-300 truncate w-32">
-                    {selectedMatch.team_a?.name}
+                    {/* Team B */}
+                    <div className={`p-3 flex justify-between items-center
+                      ${match.winner_id === match.team_b_id
+                        ? 'bg-pixel-gold/10 text-pixel-gold'
+                        : 'text-pixel-slate-light'}
+                    `}>
+                      <span className="font-[family-name:var(--font-vt)] text-[26px] truncate pr-2">
+                        {match.team_b?.name || <span className="text-pixel-border italic">TBD</span>}
+                      </span>
+                      <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-cyan">
+                        {match.score_b ?? '-'}
+                      </span>
+                    </div>
+
+                    {/* Bye */}
+                    {match.status === 'completed' && (!match.team_a_id || !match.team_b_id) && (
+                      <div className="p-1.5 text-center bg-pixel-black border-t-2 border-pixel-border">
+                        <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate tracking-[2px]">
+                          AUTO BYE
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* Score Modal */}
+    {selectedMatch && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-pixel-black/85">
+        <div
+          className="bg-pixel-panel border-[3px] border-pixel-border p-6 w-full max-w-sm relative"
+          style={{ boxShadow: '5px 5px 0 var(--color-pixel-border)' }}
+        >
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-pixel-gold" />
+          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold mb-5 leading-relaxed tracking-wide">
+            RECORD MATCH SCORE
+          </h3>
+
+          <form onSubmit={handleScoreSubmit}>
+            <div className="space-y-4 mb-6">
+              {[
+                { label: selectedMatch.team_a?.name, value: scoreA, set: setScoreA },
+                { label: selectedMatch.team_b?.name, value: scoreB, set: setScoreB },
+              ].map(({ label, value, set }) => (
+                <div key={label} className="flex items-center justify-between gap-4">
+                  <label className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light truncate w-32 leading-relaxed">
+                    {label}
                   </label>
                   <input
                     type="number"
-                    value={scoreA}
-                    onChange={(e) => setScoreA(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-50 text-center font-mono focus:outline-none focus:border-indigo-500"
-                    required
-                    min={0}
+                    value={value}
+                    onChange={(e) => set(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-20 bg-pixel-black border-[3px] border-pixel-border text-pixel-cyan text-center font-[family-name:var(--font-pixel)] text-[24px] py-2 outline-none focus:border-pixel-cyan-dim [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]"
+                    required min={0}
                   />
                 </div>
-                
-                <div className="flex items-center justify-between gap-4">
-                  <label className="text-sm font-medium text-slate-300 truncate w-32">
-                    {selectedMatch.team_b?.name}
-                  </label>
-                  <input
-                    type="number"
-                    value={scoreB}
-                    onChange={(e) => setScoreB(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-50 text-center font-mono focus:outline-none focus:border-indigo-500"
-                    required
-                    min={0}
-                  />
-                </div>
-              </div>
+              ))}
+            </div>
 
-              <div className="flex gap-3">
-                <Button type="button" variant="secondary" fullWidth onClick={() => setSelectedMatch(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" fullWidth disabled={submittingScore}>
-                  {submittingScore ? 'Saving...' : 'Save Results'}
-                </Button>
-              </div>
-            </form>
-          </div>
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" fullWidth onClick={() => setSelectedMatch(null)}>
+                CANCEL
+              </Button>
+              <Button type="submit" variant="primary" fullWidth disabled={submittingScore}>
+                {submittingScore ? 'SAVING...' : 'SAVE RESULTS'}
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
-    </AdminLayout>
-  );
+      </div>
+    )}
+  </AdminLayout>
+);
 }

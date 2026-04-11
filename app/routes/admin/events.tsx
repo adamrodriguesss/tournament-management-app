@@ -146,158 +146,192 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
     }
   };
 
+  const pixelSelect = `
+  w-full px-3 py-2.5 bg-pixel-black border-[3px] border-pixel-border
+  text-pixel-slate-light font-[family-name:var(--font-vt)] text-[24px]
+  outline-none appearance-none cursor-pointer
+  focus:border-pixel-cyan-dim
+  [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]
+`;
+
+const pixelTextarea = `
+  w-full px-3 py-2.5 bg-pixel-black border-[3px] border-pixel-border
+  text-pixel-slate-light font-[family-name:var(--font-vt)] text-[24px]
+  outline-none resize-none focus:border-pixel-cyan-dim
+  [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]
+  placeholder:text-pixel-border
+`;
+
+  //events.tsx
   return (
-    <AdminLayout user={user} activeItem="Event Management" tournamentName={tournament.name}>
-      <div className="mb-2">
-        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors inline-block font-medium">←</button>
+  <AdminLayout user={user} activeItem="Event Management" tournamentName={tournament.name}>
+    <div className="mb-2">
+      <button onClick={() => navigate('/admin/tournaments')} className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
+        ← BACK
+      </button>
+    </div>
+
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="border-l-4 border-pixel-gold pl-4 py-1">
+        <h1 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
+          {tournament.name.toUpperCase()}
+        </h1>
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">Event Management</p>
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">{tournament.name}</h1>
-          <p className="text-slate-400 mt-1">Event Management</p>
-        </div>
-        <Button onClick={() => setShowCreate(!showCreate)}>
-          {showCreate ? 'Cancel' : '+ New Event'}
-        </Button>
+      <Button onClick={() => setShowCreate(!showCreate)}>
+        {showCreate ? 'CANCEL' : '+ NEW EVENT'}
+      </Button>
+    </div>
+
+    {/* Create Form */}
+    {showCreate && (
+      <div
+        className="bg-pixel-panel border-[3px] border-pixel-border p-5 mb-8 relative"
+        style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+      >
+        <div className="absolute top-0 left-0 right-0 h-[3px]"
+          style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+        />
+        <h2 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold mb-5 tracking-wide leading-relaxed">
+          CREATE EVENT
+        </h2>
+        <form onSubmit={handleCreate} className="space-y-4">
+          {error && (
+            <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">
+              ⚠ {error}
+            </div>
+          )}
+          <Input label="Event Name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Chess Tournament" />
+
+          <div className="w-full flex flex-col space-y-2">
+            <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the event..." rows={3} className={pixelTextarea} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="w-full flex flex-col space-y-2">
+              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Event Type</label>
+              <select value={type} onChange={(e) => setType(e.target.value)} className={pixelSelect}>
+                <option value="team">Team Based (e.g. Football)</option>
+                <option value="individual">Individual (e.g. Solo Dance)</option>
+              </select>
+            </div>
+            <div className="w-full flex flex-col space-y-2">
+              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Event Format</label>
+              <select value={format} onChange={(e) => setFormat(e.target.value)} className={pixelSelect}>
+                <option value="bracket">Tournament Bracket (Matches)</option>
+                <option value="judged">Judged (1st/2nd/3rd Result Entry)</option>
+              </select>
+            </div>
+          </div>
+
+          {type === 'team' && (
+            <Input label="Max Participants Per Team" type="number" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} placeholder="e.g. 11" min={1} />
+          )}
+
+          <div className="grid grid-cols-3 gap-4">
+            <Input label="1st Place Pts" type="number" value={pointsFirst} onChange={(e) => setPointsFirst(e.target.value)} required min={0} />
+            <Input label="2nd Place Pts" type="number" value={pointsSecond} onChange={(e) => setPointsSecond(e.target.value)} required min={0} />
+            <Input label="3rd Place Pts" type="number" value={pointsThird} onChange={(e) => setPointsThird(e.target.value)} required min={0} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Main Auditorium" />
+            <div className="w-full flex flex-col space-y-2">
+              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Scheduled At</label>
+              <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className={pixelSelect} />
+            </div>
+          </div>
+
+          <Button fullWidth type="submit" disabled={loading}>
+            {loading ? 'CREATING...' : 'CREATE EVENT'}
+          </Button>
+        </form>
       </div>
+    )}
 
-      {/* Create Form */}
-      {showCreate && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Create Event</h2>
-          <form onSubmit={handleCreate} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-500">{error}</div>
-            )}
-            <Input label="Event Name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Chess Tournament" />
-            <div className="w-full flex flex-col space-y-1.5">
-              <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the event..."
-                rows={3}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 resize-none"
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="w-full flex flex-col space-y-1.5">
-                <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Event Type</label>
-                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                  <option value="team">Team Based (e.g. Football)</option>
-                  <option value="individual">Individual (e.g. Solo Dance)</option>
-                </select>
-              </div>
-              <div className="w-full flex flex-col space-y-1.5">
-                <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Event Format</label>
-                <select value={format} onChange={(e) => setFormat(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                  <option value="bracket">Tournament Bracket (Matches)</option>
-                  <option value="judged">Judged (1st/2nd/3rd Result Entry)</option>
-                </select>
-              </div>
+    {/* Events List */}
+    {events.length === 0 ? (
+      <div className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+        <span className="text-5xl mb-4 block opacity-40">🗓️</span>
+        <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">NO EVENTS YET</h3>
+        <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">Create the first event for this tournament.</p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {events.map((e) => (
+          <div
+            key={e.id}
+            className="bg-pixel-card border-[3px] border-pixel-border p-4 sm:p-5 relative hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-100"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+          >
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-purple opacity-60" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
+                {e.name.toUpperCase()}
+              </h3>
+              <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border self-start sm:self-auto tracking-wide ${statusColor(e.status)}`}>
+                {e.status.toUpperCase()}
+              </span>
             </div>
 
-            {type === 'team' && (
-              <Input 
-                label="Max Participants Per Team" 
-                type="number" 
-                value={maxParticipants} 
-                onChange={(e) => setMaxParticipants(e.target.value)} 
-                placeholder="Limit team members participating (e.g. 11)" 
-                min={1}
-              />
-            )}
-
-            <div className="grid grid-cols-3 gap-4">
-              <Input label="1st Place Pts" type="number" value={pointsFirst} onChange={(e) => setPointsFirst(e.target.value)} required min={0} />
-              <Input label="2nd Place Pts" type="number" value={pointsSecond} onChange={(e) => setPointsSecond(e.target.value)} required min={0} />
-              <Input label="3rd Place Pts" type="number" value={pointsThird} onChange={(e) => setPointsThird(e.target.value)} required min={0} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Main Auditorium" />
-              <div className="w-full flex flex-col space-y-1.5">
-                <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Scheduled At</label>
-                <input 
-                  type="datetime-local" 
-                  value={scheduledAt} 
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                />
-              </div>
-            </div>
-
-            <Button fullWidth type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Event'}
-            </Button>
-          </form>
-        </div>
-      )}
-
-      {/* Events List */}
-      {events.length === 0 ? (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
-          <span className="text-4xl mb-4 block">🗓️</span>
-          <h3 className="text-lg font-semibold mb-1">No Events Yet</h3>
-          <p className="text-slate-400 text-sm">Create the first event for this tournament.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {events.map((e) => (
-            <div key={e.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-5 hover:border-slate-600 transition-colors duration-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <h3 className="text-lg font-semibold">{e.name}</h3>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColor(e.status)} self-start sm:self-auto`}>
-                  {e.status}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-dark border border-pixel-border text-pixel-slate capitalize tracking-wide">
+                {e.type.toUpperCase()}
+              </span>
+              <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-dark border border-pixel-border text-pixel-slate capitalize tracking-wide">
+                {e.format.toUpperCase()}
+              </span>
+              {e.type === 'team' && e.max_participants_per_team && (
+                <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-cyan/10 border border-pixel-cyan-dim text-pixel-cyan-dim tracking-wide">
+                  MAX {e.max_participants_per_team} MEMBERS
                 </span>
-              </div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-700 text-slate-300 capitalize">{e.type}</span>
-                <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-700 text-slate-300 capitalize">{e.format}</span>
-                {e.type === 'team' && e.max_participants_per_team && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    Max: {e.max_participants_per_team} members
-                  </span>
-                )}
-              </div>
-              {e.description && <p className="text-slate-400 text-sm mb-3">{e.description}</p>}
-              <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm text-slate-400 mb-4">
-                {e.venue && <span>📍 {e.venue}</span>}
-                {e.scheduled_at && <span>🕐 {new Date(e.scheduled_at).toLocaleString()}</span>}
-              </div>
-              <div className="flex flex-wrap gap-3 items-center">
-                {/* Assign Event Manager */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">Assigned to:</span>
-                  <select
-                    value={e.assigned_to || ''}
-                    onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
-                    disabled={assigningEventId === e.id}
-                    className="text-xs px-2 py-1.5 bg-slate-900 border border-slate-700 text-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
-                  >
-                    <option value="">Unassigned</option>
-                    {eventManagers.map((mgr) => (
-                      <option key={mgr.id} value={mgr.id}>
-                        {mgr.full_name || mgr.email}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Button variant="secondary" onClick={() => navigate(`/admin/events/${e.id}/${e.format === 'bracket' ? 'bracket' : 'results'}`)}>
-                  Manage {e.format === 'bracket' ? 'Bracket' : 'Results'}
-                </Button>
-                <button
-                  onClick={() => handleDelete(e.id, e.name)}
-                  className="text-xs px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors font-medium"
-                >
-                  Delete
-                </button>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
-    </AdminLayout>
-  );
+
+            {e.description && (
+              <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate mb-3">{e.description}</p>
+            )}
+
+            <div className="flex flex-wrap gap-4 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate mb-4">
+              {e.venue && <span>📍 {e.venue}</span>}
+              {e.scheduled_at && <span>🕐 {new Date(e.scheduled_at).toLocaleString()}</span>}
+            </div>
+
+            <div className="flex flex-wrap gap-3 items-center">
+              {/* Assign Manager */}
+              <div className="flex items-center gap-2">
+                <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate tracking-wide">ASSIGNED TO:</span>
+                <select
+                  value={e.assigned_to || ''}
+                  onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
+                  disabled={assigningEventId === e.id}
+                  className="font-[family-name:var(--font-vt)] text-[26px] px-2 py-1.5 bg-pixel-black border-2 border-pixel-border text-pixel-slate-light outline-none focus:border-pixel-cyan-dim min-w-[140px]"
+                >
+                  <option value="">Unassigned</option>
+                  {eventManagers.map((mgr) => (
+                    <option key={mgr.id} value={mgr.id}>{mgr.full_name || mgr.email}</option>
+                  ))}
+                </select>
+              </div>
+
+              <Button variant="secondary" onClick={() => navigate(`/admin/events/${e.id}/${e.format === 'bracket' ? 'bracket' : 'results'}`)}>
+                MANAGE {e.format === 'bracket' ? 'BRACKET' : 'RESULTS'}
+              </Button>
+
+              <button
+                onClick={() => handleDelete(e.id, e.name)}
+                className="font-[family-name:var(--font-pixel)] text-[12px] px-3 py-2 border-2 border-pixel-red text-pixel-red bg-pixel-red/5 hover:bg-pixel-red/10 transition-colors tracking-wide
+                  [box-shadow:2px_2px_0_#a01e36] active:translate-x-[2px] active:translate-y-[2px] active:[box-shadow:none]"
+              >
+                DELETE
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </AdminLayout>
+);
 }

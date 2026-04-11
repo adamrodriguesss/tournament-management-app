@@ -8,24 +8,34 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className = '', ...props }, ref) => {
     return (
-      <div className="w-full flex flex-col space-y-1.5">
+      <div className="w-full flex flex-col space-y-2">
         {label && (
-          <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">
+          <label className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold uppercase tracking-[2px] leading-relaxed">
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={`
-            w-full px-3 py-2 bg-slate-950 border text-slate-50 rounded-lg
-            transition-colors duration-200 outline-none
-            focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 focus:border-indigo-500
-            ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-700'}
+            w-full px-4 py-3
+            bg-pixel-black border-[3px] text-pixel-slate-light
+            font-[family-name:var(--font-vt)] text-[22px]
+            outline-none transition-colors duration-100
+            [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]
+            placeholder:text-pixel-border
+            ${error
+              ? 'border-pixel-red focus:border-pixel-red'
+              : 'border-pixel-border focus:border-pixel-cyan-dim'
+            }
             ${className}
           `}
           {...props}
         />
-        {error && <span className="text-sm font-medium text-red-500">{error}</span>}
+        {error && (
+          <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">
+            ⚠ {error}
+          </span>
+        )}
       </div>
     );
   }

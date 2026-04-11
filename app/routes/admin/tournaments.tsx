@@ -86,11 +86,12 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
     }
   };
 
+  //tournamnets.tsx
   return (
     <AdminLayout user={user} activeItem="Tournaments">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Tournaments</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Tournaments</h1>
           <p className="text-slate-400 mt-1">Create and manage tournament events.</p>
         </div>
         <Button onClick={() => setShowCreate(!showCreate)}>
@@ -100,15 +101,15 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
 
       {/* Create Form */}
       {showCreate && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 mb-8">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 md:p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Create Tournament</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-500">{error}</div>
+              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-md text-red-500">{error}</div>
             )}
             <Input label="Tournament Name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Annual College Fest 2026" />
             <div className="w-full flex flex-col space-y-1.5">
-              <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Description</label>
+              <label className="text-[22px] font-medium text-slate-400 uppercase tracking-wide">Description</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -117,12 +118,12 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-700 text-slate-50 rounded-lg transition-colors duration-200 outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 focus:border-indigo-500 resize-none"
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               <Input label="End Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
             <div className="w-full flex flex-col space-y-1.5">
-              <label className="text-[14px] font-medium text-slate-400 uppercase tracking-wide">Status</label>
+              <label className="text-[22px] font-medium text-slate-400 uppercase tracking-wide">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -146,20 +147,20 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
           <span className="text-4xl mb-4 block">🏆</span>
           <h3 className="text-lg font-semibold mb-1">No Tournaments Yet</h3>
-          <p className="text-slate-400 text-sm">Create your first tournament to get started.</p>
+          <p className="text-slate-400 text-md">Create your first tournament to get started.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {tournaments.map((t) => (
-            <div key={t.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-5 hover:border-slate-600 transition-colors duration-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div key={t.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 md:p-5 hover:border-slate-600 transition-colors duration-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
                 <h3 className="text-lg font-semibold">{t.name}</h3>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColor(t.status)} self-start sm:self-auto`}>
+                <span className={`text-base font-medium px-2.5 py-1 rounded-full border ${statusColor(t.status)} self-start md:self-auto`}>
                   {t.status.replace('_', ' ')}
                 </span>
               </div>
-              {t.description && <p className="text-slate-400 text-sm mb-3">{t.description}</p>}
-              <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm text-slate-400 mb-4">
+              {t.description && <p className="text-slate-400 text-md mb-3">{t.description}</p>}
+              <div className="flex flex-wrap items-center gap-3 md:gap-6 text-md text-slate-400 mb-4">
                 {t.start_date && <span>📅 Start: {t.start_date}</span>}
                 {t.end_date && <span>📅 End: {t.end_date}</span>}
               </div>

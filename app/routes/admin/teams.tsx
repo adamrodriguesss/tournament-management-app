@@ -78,30 +78,57 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   const getTeamParticipants = (teamId: string) =>
     participants.filter((p) => p.team_id === teamId);
 
+  // const statusBadge = (status: string) => {
+  //   switch (status) {
+  //     case 'confirmed': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+  //     case 'rejected':
+  //     case 'disqualified': return 'bg-red-500/10 text-red-500 border-red-500/20';
+  //     default: return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+  //   }
+  // };
+
+  //teams.tsx
   const statusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+      case 'confirmed':    return 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim';
       case 'rejected':
-      case 'disqualified': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+      case 'disqualified': return 'bg-pixel-red/10 text-pixel-red border-pixel-red';
+      default:             return 'bg-amber-500/10 text-amber-400 border-amber-500';
     }
   };
 
   return (
     <AdminLayout user={user} activeItem="Team Approvals" tournamentName={tournament.name}>
       <div className="mb-2">
-        <button onClick={() => navigate('/admin/tournaments')} className="text-slate-400 hover:text-slate-50 text-sm transition-colors mb-2 inline-block font-medium">←</button>
+        <button
+          onClick={() => navigate('/admin/tournaments')}
+          className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide"
+        >
+          ← BACK
+        </button>
       </div>
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">{tournament.name}</h1>
-        <p className="text-slate-400 mt-1">Team Management Queue</p>
+
+      <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+        <h1 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
+          {tournament.name.toUpperCase()}
+        </h1>
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+          Team Management Queue
+        </p>
       </div>
 
       {teams.length === 0 ? (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
-          <span className="text-4xl mb-4 block">👥</span>
-          <h3 className="text-lg font-semibold mb-1">No Teams Registered</h3>
-          <p className="text-slate-400 text-sm">No teams have registered for this tournament yet.</p>
+        <div
+          className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center"
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <span className="text-5xl mb-4 block opacity-40">👥</span>
+          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">
+            NO TEAMS REGISTERED
+          </h3>
+          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
+            No teams have registered for this tournament yet.
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -110,60 +137,90 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
             const pendingCount = teamParts.filter((p) => p.status === 'pending').length;
 
             return (
-              <div key={team.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+              <div
+                key={team.id}
+                className="bg-pixel-card border-[3px] border-pixel-border overflow-hidden relative"
+                style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+              >
+                {/* gradient top accent */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[3px]"
+                  style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+                />
+
                 {/* Team Header */}
-                <div className="p-4 sm:p-5 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 sm:p-5 border-b-[3px] border-pixel-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <h3 className="text-lg font-semibold">{team.name}</h3>
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusBadge(team.status)}`}>
-                        {team.status}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                      <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
+                        {team.name.toUpperCase()}
+                      </h3>
+                      <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border-2 tracking-wide ${statusBadge(team.status)}`}>
+                        {team.status.toUpperCase()}
                       </span>
                       {pendingCount > 0 && (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500">
-                          {pendingCount} pending
+                        <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/40 tracking-wide">
+                          {pendingCount} PENDING
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-400 mt-1">{team.department} · Code: <code className="text-indigo-400 font-mono">{team.registration_token}</code></p>
+                    <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate">
+                      {team.department} · Code:{' '}
+                      <code className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-cyan tracking-[3px]">
+                        {team.registration_token}
+                      </code>
+                    </p>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="flex gap-2 flex-wrap">
                     {team.status === 'pending' && (
                       <Button variant="primary" onClick={() => handleConfirmTeam(team.id)}>
-                        Confirm Team
+                        CONFIRM TEAM
                       </Button>
                     )}
                     {team.status !== 'disqualified' && (
-                      <Button variant="secondary" onClick={() => handleDisqualifyTeam(team.id)}>
-                        Disqualify
+                      <Button variant="danger" onClick={() => handleDisqualifyTeam(team.id)}>
+                        DISQUALIFY
                       </Button>
                     )}
                   </div>
                 </div>
 
-                {/* Participants — Table on desktop, Cards on mobile */}
                 {teamParts.length > 0 ? (
                   <>
                     {/* Desktop Table */}
                     <div className="hidden sm:block overflow-x-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full">
                         <thead>
-                          <tr className="text-left text-slate-500 text-xs uppercase tracking-wide border-b border-slate-700">
-                            <th className="px-5 py-3">Name</th>
-                            <th className="px-5 py-3">Email</th>
-                            <th className="px-5 py-3">Role</th>
-                            <th className="px-5 py-3">Status</th>
+                          <tr className="border-b-2 border-pixel-border bg-pixel-dark">
+                            {['Name', 'Email', 'Role', 'Status'].map((h) => (
+                              <th
+                                key={h}
+                                className="px-5 py-3 text-left font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px]"
+                              >
+                                {h}
+                              </th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
                           {teamParts.map((p) => (
-                            <tr key={p.id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/50">
-                              <td className="px-5 py-3 font-medium">{p.users?.full_name || '—'}</td>
-                              <td className="px-5 py-3 text-slate-400">{p.users?.email || '—'}</td>
-                              <td className="px-5 py-3 capitalize">{p.role_in_team}</td>
+                            <tr
+                              key={p.id}
+                              className="border-b border-pixel-border last:border-0 hover:bg-pixel-dark/50 transition-colors"
+                            >
+                              <td className="px-5 py-3 font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                                {p.users?.full_name || '—'}
+                              </td>
+                              <td className="px-5 py-3 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate">
+                                {p.users?.email || '—'}
+                              </td>
+                              <td className="px-5 py-3 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate capitalize">
+                                {p.role_in_team}
+                              </td>
                               <td className="px-5 py-3">
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusBadge(p.status)}`}>
-                                  {p.status}
+                                <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border tracking-wide ${statusBadge(p.status)}`}>
+                                  {p.status.toUpperCase()}
                                 </span>
                               </td>
                             </tr>
@@ -173,23 +230,33 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                     </div>
 
                     {/* Mobile Cards */}
-                    <div className="sm:hidden divide-y divide-slate-700">
+                    <div className="sm:hidden divide-y-2 divide-pixel-border">
                       {teamParts.map((p) => (
-                        <div key={p.id} className="p-4 space-y-2">
+                        <div key={p.id} className="p-4 space-y-2 bg-pixel-dark/30">
                           <div className="flex items-center justify-between">
-                            <p className="font-medium text-sm">{p.users?.full_name || '—'}</p>
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${statusBadge(p.status)}`}>
-                              {p.status}
+                            <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
+                              {p.users?.full_name || '—'}
+                            </p>
+                            <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border tracking-wide ${statusBadge(p.status)}`}>
+                              {p.status.toUpperCase()}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400">{p.users?.email || '—'}</p>
-                          <p className="text-xs text-slate-500 capitalize">Role: {p.role_in_team}</p>
+                          <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
+                            {p.users?.email || '—'}
+                          </p>
+                          <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate capitalize">
+                            Role: {p.role_in_team}
+                          </p>
                         </div>
                       ))}
                     </div>
                   </>
                 ) : (
-                  <div className="p-5 text-center text-slate-400 text-sm">No participants have joined this team yet.</div>
+                  <div className="p-6 text-center">
+                    <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
+                      No participants have joined this team yet.
+                    </p>
+                  </div>
                 )}
               </div>
             );

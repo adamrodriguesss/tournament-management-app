@@ -38,35 +38,55 @@ export default function AdminDashboard({ loaderData }: { loaderData: any }) {
   const { user, stats } = loaderData;
 
   return (
-    <AdminLayout user={user} activeItem="Dashboard">
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-        <p className="text-slate-400 mt-1">Welcome back, {user.full_name || "Admin"}.</p>
-      </div>
+  <AdminLayout user={user} activeItem="Dashboard">
+    <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+      <h1 className="font-[family-name:var(--font-pixel)] text-[26px] text-pixel-gold leading-relaxed tracking-wide">
+        DASHBOARD
+      </h1>
+      <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">
+        Welcome back, {user.full_name || 'Admin'}.
+      </p>
+    </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-        {[
-          { label: "Total Events", value: stats.totalEvents, icon: "📅" },
-          { label: "Active Tournaments", value: stats.activeTournaments, icon: "🏆" },
-          { label: "Registered Users", value: stats.registeredUsers, icon: "👥" },
-          { label: "Pending Approvals", value: stats.pendingApprovals, icon: "⏳" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-colors duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-2xl">{stat.icon}</span>
-            </div>
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-sm text-slate-400 mt-1">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+    {/* Stats Grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {[
+        { label: 'Total Events',       value: stats.totalEvents,       icon: '📅', accent: 'border-pixel-cyan-dim'    },
+        { label: 'Active Tournaments', value: stats.activeTournaments, icon: '🏆', accent: 'border-pixel-gold'        },
+        { label: 'Registered Users',   value: stats.registeredUsers,   icon: '👥', accent: 'border-pixel-purple'      },
+        { label: 'Pending Approvals',  value: stats.pendingApprovals,  icon: '⏳', accent: 'border-amber-400'         },
+      ].map((stat) => (
+        <div
+          key={stat.label}
+          className={`bg-pixel-card border-[3px] ${stat.accent} p-5 relative`}
+          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+        >
+          <span className="text-2xl mb-3 block">{stat.icon}</span>
+          <p className="font-[family-name:var(--font-pixel)] text-[26px] text-pixel-slate-light leading-none mb-2">
+            {stat.value}
+          </p>
+          <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate tracking-[2px] uppercase leading-relaxed">
+            {stat.label}
+          </p>
+        </div>
+      ))}
+    </div>
 
-      {/* Placeholder Content */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-2">Recent Activity</h2>
-        <p className="text-slate-400 text-sm">No recent activity to display. Start by creating events and tournaments.</p>
+    {/* Recent Activity */}
+    <div
+      className="bg-pixel-card border-[3px] border-pixel-border p-6"
+      style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-[2px] w-4 bg-pixel-gold opacity-60" />
+        <h2 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold tracking-[2px]">
+          RECENT ACTIVITY
+        </h2>
       </div>
-    </AdminLayout>
+      <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
+        No recent activity to display. Start by creating events and tournaments.
+      </p>
+    </div>
+  </AdminLayout>
   );
 }

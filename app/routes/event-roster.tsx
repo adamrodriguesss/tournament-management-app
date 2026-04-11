@@ -96,93 +96,138 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
 
   return (
     <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard">
-      <div className="max-w-2xl w-full">
-        <button className="text-slate-400 hover:text-slate-50 text-sm mb-6 transition-colors inline-block font-medium" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
-          ←
-        </button>
+  <div className="max-w-2xl w-full">
 
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 md:p-8">
-          <div className="mb-6 border-b border-slate-700 pb-6">
-            <h1 className="text-2xl font-bold mb-2">Manage Event Roster</h1>
-            <p className="text-slate-400 text-sm">Select the team members who will participate in this event.</p>
-          </div>
+    <button
+      className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] hover:text-[#e2b714] mb-6 transition-colors tracking-wide inline-block"
+      onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}
+    >
+      ← BACK
+    </button>
 
-          {error && <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-500 mb-6">{error}</div>}
-          {success && <div className="p-3 bg-emerald-500/10 border border-emerald-500/50 rounded-lg text-sm text-emerald-500 mb-6">Roster updated successfully!</div>}
+    <div
+      className="bg-[#1a1a2e] border-[3px] border-[#0f3460] p-6 md:p-8"
+      style={{ boxShadow: '3px 3px 0 #0f3460' }}
+    >
+      {/* Header */}
+      <div className="mb-6 border-b-2 border-[#0f3460] pb-6">
+        <h1 className="font-['Press_Start_2P'] text-[11px] text-[#e2b714] mb-3 leading-relaxed tracking-wide">
+          MANAGE EVENT ROSTER
+        </h1>
+        <p className="font-['VT323'] text-[24px] text-[#8892b0]">
+          Select the team members who will participate in this event.
+        </p>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8 bg-slate-900/50 border border-slate-700 p-4 rounded-lg text-sm">
-            <div>
-              <p className="text-slate-500 uppercase text-xs tracking-wide">Event</p>
-              <p className="font-semibold">{event.name}</p>
+      {/* Alerts */}
+      {error && (
+        <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[12px] text-red-500 tracking-wide leading-relaxed mb-6">
+          ⚠ {error}
+        </div>
+      )}
+      {success && (
+        <div className="border-2 border-[#00b82e] bg-[#00ff41]/10 p-3 font-['Press_Start_2P'] text-[12px] text-[#00b82e] tracking-wide leading-relaxed mb-6">
+          ✓ ROSTER UPDATED SUCCESSFULLY!
+        </div>
+      )}
+
+      {/* Event / Team Info Grid */}
+      <div
+        className="grid grid-cols-2 gap-4 mb-8 bg-[#12121a] border-2 border-[#0f3460] p-4"
+        style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.5)' }}
+      >
+        <div>
+          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-1">Event</p>
+          <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">{event.name}</p>
+        </div>
+        <div>
+          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-1">Team</p>
+          <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">{team.name}</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="col-span-2">
+          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-2">Participants Limit</p>
+          <div className="flex items-center gap-3 w-full">
+            <div className="flex-1 h-[10px] bg-[#0a0a0f] border-2 border-[#0f3460]">
+              <div
+                className={`h-full transition-all ${
+                  maxParticipants && selectedIds.size > maxParticipants
+                    ? 'bg-red-500'
+                    : maxParticipants && selectedIds.size === maxParticipants
+                    ? 'bg-[#00b82e]'
+                    : 'bg-[#00b8c1]'
+                }`}
+                style={{ width: maxParticipants ? `${Math.min((selectedIds.size / maxParticipants) * 100, 100)}%` : '100%' }}
+              />
             </div>
-            <div>
-              <p className="text-slate-500 uppercase text-xs tracking-wide">Team</p>
-              <p className="font-semibold">{team.name}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-slate-500 uppercase text-xs tracking-wide mb-1">Participants Limit</p>
-              <div className="flex items-center gap-3 w-full">
-                <div className="flex-1 bg-slate-800 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all ${
-                      maxParticipants && selectedIds.size > maxParticipants ? 'bg-red-500' :
-                      maxParticipants && selectedIds.size === maxParticipants ? 'bg-emerald-500' : 'bg-indigo-500'
-                    }`}
-                    style={{ width: maxParticipants ? `${Math.min((selectedIds.size / maxParticipants) * 100, 100)}%` : '100%' }}
-                  />
-                </div>
-                <span className={`text-xs font-mono font-medium ${maxParticipants && selectedIds.size > maxParticipants ? 'text-red-400' : 'text-slate-300'}`}>
-                  {selectedIds.size} / {maxParticipants || '∞'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <h3 className="font-medium text-slate-300 mb-3">Confirmed Team Members</h3>
-          <div className="space-y-2 mb-8">
-            {approvedMembers.length === 0 ? (
-              <p className="text-sm text-slate-500">No approved members found in this team.</p>
-            ) : (
-              approvedMembers.map((member: any) => {
-                const isSelected = selectedIds.has(member.id);
-                const isDisabled = !isSelected && maxParticipants && selectedIds.size >= maxParticipants;
-                
-                return (
-                  <div 
-                    key={member.id} 
-                    onClick={() => { if (!isDisabled) handleToggle(member.id); }}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none
-                      ${isSelected ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}
-                      ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors
-                        ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-500 bg-slate-800'}
-                      `}>
-                        {isSelected && <span className="text-white text-xs leading-none">✓</span>}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{member.users?.full_name}</p>
-                        <p className="text-xs text-slate-400 capitalize">{member.role_in_team}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-700">
-            <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleSave} disabled={loading}>
-              {loading ? 'Saving...' : 'Save Roster'}
-            </Button>
+            <span className={`font-['Press_Start_2P'] text-[10px] ${
+              maxParticipants && selectedIds.size > maxParticipants ? 'text-red-400' : 'text-[#00f5ff]'
+            }`}>
+              {selectedIds.size} / {maxParticipants || '∞'}
+            </span>
           </div>
         </div>
       </div>
-    </AppLayout>
+
+      {/* Member List */}
+      <h3 className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] tracking-[2px] mb-3">
+        CONFIRMED MEMBERS
+      </h3>
+      <div className="space-y-2 mb-8">
+        {approvedMembers.length === 0 ? (
+          <p className="font-['VT323'] text-[22px] text-[#8892b0]">No approved members found in this team.</p>
+        ) : (
+          approvedMembers.map((member: any) => {
+            const isSelected = selectedIds.has(member.id);
+            const isDisabled = !isSelected && maxParticipants && selectedIds.size >= maxParticipants;
+
+            return (
+              <div
+                key={member.id}
+                onClick={() => { if (!isDisabled) handleToggle(member.id); }}
+                className={`flex items-center justify-between p-3 border-2 transition-all cursor-pointer select-none
+                  ${isSelected
+                    ? 'bg-[#00f5ff]/5 border-[#00b8c1]'
+                    : 'bg-[#12121a] border-[#0f3460] hover:border-[#8892b0]'}
+                  ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
+                `}
+                style={isSelected ? { boxShadow: '2px 2px 0 #00b8c1' } : {}}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Pixel checkbox */}
+                  <div className={`w-[18px] h-[18px] border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                    ${isSelected ? 'bg-[#00b8c1] border-[#00f5ff]' : 'bg-[#0a0a0f] border-[#8892b0]'}
+                  `}>
+                    {isSelected && <span className="text-[#0a0a0f] text-[11px] font-bold leading-none">✓</span>}
+                  </div>
+                  <div>
+                    <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">
+                      {member.users?.full_name}
+                    </p>
+                    <p className="font-['VT323'] text-[24px] text-[#8892b0] capitalize">
+                      {member.role_in_team}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="flex justify-end gap-3 pt-6 border-t-2 border-[#0f3460]">
+        <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
+          CANCEL
+        </Button>
+        <Button variant="primary" onClick={handleSave} disabled={loading}>
+          {loading ? 'SAVING...' : 'SAVE ROSTER'}
+        </Button>
+      </div>
+    </div>
+
+  </div>
+</AppLayout>
   );
 }

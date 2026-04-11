@@ -17,6 +17,18 @@ export async function createTeam(payload: {
   return { data, error };
 }
 
+// fucntion to check if a team from the dept exists
+export async function checkTeamExists(tournamentId: string, department: string) {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("tournament_id", tournamentId)
+    .eq("department", department)
+    .maybeSingle();
+
+  return { data, error };
+}
+
 /** Fetches all teams for a given tournament. */
 export async function getTeamsByTournament(tournamentId: string) {
   const { data, error } = await supabase

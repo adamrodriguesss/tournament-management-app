@@ -1,3 +1,5 @@
+import { formatToDDMMYYTime } from '../../lib/utils';
+
 export function EventCard({ event, registration, type }: { event: any; registration: any; type: 'team' | 'individual' }) {
   const statusStyles = (s: string) => {
     switch (s) {
@@ -66,7 +68,7 @@ export function EventCard({ event, registration, type }: { event: any; registrat
       {/* Venue / Time */}
       <div className="flex flex-wrap items-center gap-3 font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
         {event.venue && <span>📍 {event.venue}</span>}
-        {event.scheduled_at && <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>}
+        {event.scheduled_at && <span>🕐 {formatToDDMMYYTime(event.scheduled_at)}</span>}
       </div>
 
       {/* Registration Footer */}

@@ -107,6 +107,42 @@ export async function generateBracket(eventId: string, adminId: string) {
   return { error: insertError };
 }
 
+async function eliminateDownstreamMatchWinner(matchIdToStartFrom: string | null, oldWinnerIdToErase: string | null) {
+  if (!matchIdToStartFrom || !oldWinnerIdToErase) return;
+  
+  let currId: string | null = matchIdToStartFrom;
+  while (currId) {
+    const result: any = await supabase.from('matches').select('*').eq('id', currId).single();
+    const currMatch = result.data;
+    if (!currMatch) break;
+    
+    let updateData: any = {};
+    let fieldToClear = null;
+    if (currMatch.team_a_id === oldWinnerIdToErase) fieldToClear = 'team_a_id';
+    else if (currMatch.team_b_id === oldWinnerIdToErase) fieldToClear = 'team_b_id';
+
+    if (fieldToClear) {
+      updateData[fieldToClear] = null;
+      if (currMatch.status === 'completed') {
+        updateData.status = 'scheduled';
+        updateData.score_a = null;
+        updateData.score_b = null;
+        updateData.winner_id = null;
+        
+        await supabase.from('matches').update(updateData).eq('id', currId);
+        // Since we are resetting this match, we must also tell the loop to erase ITS winner later downstream
+        currId = currMatch.next_match_id; 
+        oldWinnerIdToErase = currMatch.winner_id; 
+      } else {
+        await supabase.from('matches').update(updateData).eq('id', currId);
+        break; // Match wasn't played yet, no need to recurse deeper
+      }
+    } else {
+      break; 
+    }
+  }
+}
+
 /** Records a score for a match and advances the winner */
 export async function recordMatchScore(
   matchId: string, 
@@ -124,8 +160,9 @@ export async function recordMatchScore(
   if (fetchErr || !match) return { error: fetchErr || new Error('Match not found') };
   if (scoreA === scoreB) return { error: new Error('Matches cannot end in a draw.') };
 
-  const winnerId = scoreA > scoreB ? match.team_a_id : match.team_b_id;
-  const loserId = scoreA > scoreB ? match.team_b_id : match.team_a_id;
+  const oldWinnerId = match.winner_id;
+  const newWinnerId = scoreA > scoreB ? match.team_a_id : match.team_b_id;
+  const newLoserId = scoreA > scoreB ? match.team_b_id : match.team_a_id;
 
   // 2. Update the current match
   const { error: updateErr } = await supabase
@@ -133,7 +170,7 @@ export async function recordMatchScore(
     .update({
       score_a: scoreA,
       score_b: scoreB,
-      winner_id: winnerId,
+      winner_id: newWinnerId,
       status: 'completed',
       entered_by: adminId,
       updated_at: new Date().toISOString()
@@ -144,32 +181,65 @@ export async function recordMatchScore(
 
   // 3. Advance to next match if one exists
   if (match.next_match_id) {
-    // We need to know if we are filling team_a_id or team_b_id of the next match
     const { data: nextMatch } = await supabase
       .from('matches')
-      .select('team_a_id, team_b_id')
+      .select('id, team_a_id, team_b_id, status, winner_id, next_match_id')
       .eq('id', match.next_match_id)
       .single();
 
     if (nextMatch) {
-      // If team_a_id is empty, fill it. Else fill team_b_id.
-      // A more robust way was calculating i % 2, but since we retrieve it via DB, we can just check emptiness.
       const updateData: any = {};
-      if (!nextMatch.team_a_id) updateData.team_a_id = winnerId;
-      else updateData.team_b_id = winnerId;
+      let weAreErasingOldWinner = false;
 
-      const { error: nextErr } = await supabase.from('matches').update(updateData).eq('id', match.next_match_id);
-      if (nextErr) return { error: nextErr };
+      if (oldWinnerId && oldWinnerId !== newWinnerId) {
+         // It's an edit, and winner changed
+         if (nextMatch.team_a_id === oldWinnerId) {
+           updateData.team_a_id = newWinnerId;
+           weAreErasingOldWinner = true;
+         } else if (nextMatch.team_b_id === oldWinnerId) {
+           updateData.team_b_id = newWinnerId;
+           weAreErasingOldWinner = true;
+         } else {
+           if (!nextMatch.team_a_id) updateData.team_a_id = newWinnerId;
+           else updateData.team_b_id = newWinnerId;
+         }
+      } else {
+         // Either first time recording, or old winner didn't change
+         if (oldWinnerId !== newWinnerId) {
+            if (!nextMatch.team_a_id) updateData.team_a_id = newWinnerId;
+            else updateData.team_b_id = newWinnerId;
+         }
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        if (weAreErasingOldWinner && nextMatch.status === 'completed') {
+           updateData.status = 'scheduled';
+           updateData.score_a = null;
+           updateData.score_b = null;
+           updateData.winner_id = null;
+           await supabase.from('matches').update(updateData).eq('id', nextMatch.id);
+           
+           // Cascade erase!
+           await eliminateDownstreamMatchWinner(nextMatch.next_match_id, nextMatch.winner_id);
+        } else {
+           await supabase.from('matches').update(updateData).eq('id', nextMatch.id);
+        }
+      }
     }
   } else {
     // 4. If there is NO next match, this was the Final!
-    // Record the overall event results for 1st and 2nd place.
     const event = match.events;
+
+    // Delete any previous final awards for this event via match editing
+    if (oldWinnerId && oldWinnerId !== newWinnerId) {
+      // Just clear out all results for the event to recreate them freshly
+      await supabase.from('event_results').delete().eq('event_id', match.event_id).in('position', [1, 2]);
+    }
 
     // 1st Place
     await supabase.from('event_results').upsert({
       event_id: match.event_id,
-      team_id: winnerId,
+      team_id: newWinnerId,
       position: 1,
       points_awarded: event.points_first,
       recorded_by: adminId
@@ -178,7 +248,7 @@ export async function recordMatchScore(
     // 2nd Place
     await supabase.from('event_results').upsert({
       event_id: match.event_id,
-      team_id: loserId,
+      team_id: newLoserId,
       position: 2,
       points_awarded: event.points_second,
       recorded_by: adminId

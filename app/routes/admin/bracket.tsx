@@ -20,6 +20,10 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const { data: event } = await supabase.from('events').select('*, tournaments(name)').eq('id', eventId).single();
   if (!event || event.format !== 'bracket') return redirect("/admin/tournaments");
 
+  if (user.role === 'event_manager' && event.assigned_to !== session.user.id) {
+    return redirect("/event-manager");
+  }
+
   // Fetch matches
   const { data: matches } = await getMatchesByEvent(eventId);
 
@@ -61,7 +65,6 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
   const openScoreModal = (match: any) => {
     // Only allow scoring if both teams exist
     if (!match.team_a_id || !match.team_b_id) return;
-    if (match.status === 'completed') return;
 
     setSelectedMatch(match);
     setScoreA(match.score_a !== null ? match.score_a : '');
@@ -90,10 +93,19 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
   return (
   <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
     <div className="mb-4">
-      <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}
-        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
-        ← BACK
-      </button>
+      {user.role === 'event_manager' ? (
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => navigate('/event-manager')}>
+            BACK
+          </Button>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}>
+            BACK
+          </Button>
+        </div>
+      )}
     </div>
 
     <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -153,7 +165,7 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
                         ? 'border-pixel-cyan-dim bg-pixel-cyan/5'
                         : 'border-pixel-border bg-pixel-dark'}
                       ${match.team_a_id && match.team_b_id && match.status !== 'completed'
-                        ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-pixel-slate'
+                        ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 border-pixel-cyan shadow-[0_0_8px_rgba(0,245,255,0.5)] animate-[pulse_2s_ease-in-out_infinite]'
                         : ''}
                     `}
                     style={{ boxShadow: '2px 2px 0 var(--color-pixel-border)' }}
@@ -217,6 +229,11 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
           </h3>
 
           <form onSubmit={handleScoreSubmit}>
+            {selectedMatch.status === 'completed' && (
+              <div className="mb-4 border-2 border-amber-500 bg-amber-500/10 p-2 font-[family-name:var(--font-pixel)] text-[10px] text-amber-500 tracking-wide leading-relaxed">
+                ⚠ EDITING PAST MATCH: If the winner changes, any downstream matches they played in will be reset!
+              </div>
+            )}
             <div className="space-y-4 mb-6">
               {[
                 { label: selectedMatch.team_a?.name, value: scoreA, set: setScoreA },

@@ -197,9 +197,9 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     {view === 'home' && (
       <div>
         {/* Welcome Header */}
-        <div className="mb-8 border-l-4 border-[#e2b714] pl-4 py-1">
-          <h2 className="font-['Press_Start_2P'] text-[26px] text-[#e2b714] leading-relaxed tracking-wide">
-            WELCOME, <span className="text-[#00f5ff]">{profile.full_name.toUpperCase()}</span>
+        <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
+          <h2 className="font-[family-name:var(--font-pixel)] text-[26px] text-pixel-gold leading-relaxed tracking-wide">
+            WELCOME, <span className="text-pixel-cyan">{profile.full_name.toUpperCase()}</span>
           </h2>
         </div>
 
@@ -207,9 +207,9 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
         {participations.length > 0 && (
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-5">
-              <div className="h-[2px] flex-1 bg-[#e2b714] opacity-30" />
-              <h3 className="font-['Press_Start_2P'] text-[10px] text-[#e2b714] tracking-[3px]">MY TEAMS</h3>
-              <div className="h-[2px] flex-1 bg-[#e2b714] opacity-30" />
+              <div className="h-[2px] flex-1 bg-pixel-gold opacity-30" />
+              <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold tracking-[3px]">MY TEAMS</h3>
+              <div className="h-[2px] flex-1 bg-pixel-gold opacity-30" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {participations.map((p: any) => (
@@ -247,9 +247,9 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
           return (
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-5">
-                <div className="h-[2px] flex-1 bg-[#a855f7] opacity-30" />
-                <h3 className="font-['Press_Start_2P'] text-[10px] text-[#a855f7] tracking-[3px]">MY EVENTS</h3>
-                <div className="h-[2px] flex-1 bg-[#a855f7] opacity-30" />
+                <div className="h-[2px] flex-1 bg-pixel-purple opacity-30" />
+                <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-purple tracking-[3px]">MY EVENTS</h3>
+                <div className="h-[2px] flex-1 bg-pixel-purple opacity-30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allMyEvents.map((item, idx) => (
@@ -268,15 +268,15 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
         {/* Available Tournaments Section */}
         <div>
           <div className="flex items-center gap-3 mb-5">
-            <div className="h-[2px] flex-1 bg-[#00b8c1] opacity-30" />
-            <h3 className="font-['Press_Start_2P'] text-[10px] text-[#00b8c1] tracking-[3px]">AVAILABLE TOURNAMENTS</h3>
-            <div className="h-[2px] flex-1 bg-[#00b8c1] opacity-30" />
+            <div className="h-[2px] flex-1 bg-pixel-cyan-dim opacity-30" />
+            <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-cyan-dim tracking-[3px]">AVAILABLE TOURNAMENTS</h3>
+            <div className="h-[2px] flex-1 bg-pixel-cyan-dim opacity-30" />
           </div>
 
           {availableTournaments.length === 0 ? (
-            <div className="border-2 border-[#0f3460] bg-[#12121a] p-6 text-center"
-                 style={{ boxShadow: '3px 3px 0 #0f3460' }}>
-              <p className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] tracking-wide leading-relaxed">
+            <div className="border-2 border-pixel-border bg-pixel-dark p-6 text-center"
+                 style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+              <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate tracking-wide leading-relaxed">
                 NO TOURNAMENTS AVAILABLE RIGHT NOW
               </p>
             </div>
@@ -285,16 +285,16 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
               {availableTournaments.map((t: any) => (
                 <div
                   key={t.id}
-                  className="bg-[#16213e] border-[3px] border-[#0f3460] p-6 relative transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer"
-                  style={{ boxShadow: '3px 3px 0 #0f3460' }}
+                  className="bg-pixel-card border-[3px] border-pixel-border p-6 relative transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer"
+                  style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
                 >
                   {/* gold top accent bar */}
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#e2b714] to-[#a855f7]" />
-                  <h4 className="font-['Press_Start_2P'] text-[12px] text-[#e2b714] mb-2 leading-relaxed tracking-wide">
+                  <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }} />
+                  <h4 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold mb-2 leading-relaxed tracking-wide">
                     {t.name.toUpperCase()}
                   </h4>
                   {t.description && (
-                    <p className="font-['VT323'] text-[22px] text-[#8892b0] mb-4 line-clamp-2">
+                    <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate mb-4 line-clamp-2">
                       {t.description}
                     </p>
                   )}
@@ -315,42 +315,41 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
     {/* Tournament Action View */}
     {view === 'tournament_action' && selectedTournament && (
       <div className="max-w-lg mx-auto w-full text-center py-8">
-        <button
-          onClick={resetView}
-          className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] hover:text-[#e2b714] mb-8 transition-colors tracking-wide"
-        >
-          ← BACK
-        </button>
-        <h2 className="font-['Press_Start_2P'] text-[24px] text-[#e2b714] mb-3 leading-relaxed tracking-wide">
+        <div className="mb-8">
+          <Button variant="secondary" onClick={resetView}>
+            BACK
+          </Button>
+        </div>
+        <h2 className="font-[family-name:var(--font-pixel)] text-[24px] text-pixel-gold mb-3 leading-relaxed tracking-wide">
           {selectedTournament.name.toUpperCase()}
         </h2>
-        <p className="font-['VT323'] text-[24px] text-[#8892b0] mb-8">
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mb-8">
           Get started by creating or joining a team.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
           <button
             onClick={() => setView('create')}
-            className="bg-[#16213e] border-[3px] border-[#0f3460] p-6 text-left transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 group"
-            style={{ boxShadow: '3px 3px 0 #0f3460' }}
+            className="bg-pixel-card border-[3px] border-pixel-border p-6 text-left transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 group"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
           >
             <span className="text-3xl mb-3 block">🏴</span>
-            <h3 className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] group-hover:text-[#00f5ff] mb-2 leading-relaxed transition-colors">
+            <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light group-hover:text-pixel-cyan mb-2 leading-relaxed transition-colors">
               CREATE TEAM
             </h3>
-            <p className="font-['VT323'] text-[26px] text-[#8892b0]">Start a new team and invite others.</p>
+            <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate">Start a new team and invite others.</p>
           </button>
 
           <button
             onClick={() => setView('join')}
-            className="bg-[#16213e] border-[3px] border-[#e2b714] p-6 text-left transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 group"
-            style={{ boxShadow: '3px 3px 0 #c49a0a' }}
+            className="bg-pixel-card border-[3px] border-pixel-gold p-6 text-left transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 group"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-gold-dark)' }}
           >
             <span className="text-3xl mb-3 block">🤝</span>
-            <h3 className="font-['Press_Start_2P'] text-[10px] text-[#e2b714] group-hover:text-[#00f5ff] mb-2 leading-relaxed transition-colors">
+            <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold group-hover:text-pixel-cyan mb-2 leading-relaxed transition-colors">
               JOIN TEAM
             </h3>
-            <p className="font-['VT323'] text-[26px] text-[#8892b0]">Use a join code from a captain.</p>
+            <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate">Use a join code from a captain.</p>
           </button>
         </div>
       </div>
@@ -361,11 +360,11 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
       <div className="flex justify-center py-8">
         {success ? (
           <div
-            className="bg-[#1a1a2e] border-[3px] border-[#0f3460] p-6 sm:p-8 max-w-md w-full text-center"
-            style={{ boxShadow: '3px 3px 0 #0f3460' }}
+            className="bg-pixel-panel border-[3px] border-pixel-border p-6 sm:p-8 max-w-md w-full text-center"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
           >
-            <div className="border-2 border-[#00b82e] bg-[#00ff41]/10 p-4 mb-6">
-              <p className="font-['Press_Start_2P'] text-[10px] text-[#00b82e] tracking-wide leading-relaxed">{success}</p>
+            <div className="border-2 border-pixel-green-dim bg-pixel-green/10 p-4 mb-6">
+              <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-green-dim tracking-wide leading-relaxed">{success}</p>
             </div>
             <Button fullWidth onClick={resetView}>
               RETURN TO DASHBOARD
@@ -373,27 +372,26 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
           </div>
         ) : (
           <div
-            className="bg-[#1a1a2e] border-[3px] border-[#0f3460] p-6 sm:p-8 max-w-md w-full"
-            style={{ boxShadow: '3px 3px 0 #0f3460' }}
+            className="bg-pixel-panel border-[3px] border-pixel-border p-6 sm:p-8 max-w-md w-full"
+            style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
           >
-            <button
-              onClick={() => { setView('tournament_action'); setError(null); }}
-              className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] hover:text-[#e2b714] mb-6 transition-colors tracking-wide"
-            >
-              ← BACK
-            </button>
+            <div className="mb-6">
+              <Button variant="secondary" onClick={() => { setView('tournament_action'); setError(null); }}>
+                BACK
+              </Button>
+            </div>
 
-            <h2 className="font-['Press_Start_2P'] text-[11px] text-[#e2b714] mb-2 leading-relaxed tracking-wide">
+            <h2 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold mb-2 leading-relaxed tracking-wide">
               {view === 'create' ? 'CREATE A TEAM' : 'JOIN A TEAM'}
             </h2>
-            <p className="font-['VT323'] text-[22px] text-[#8892b0] mb-6">
+            <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate mb-6">
               For: {selectedTournament?.name}
             </p>
 
             {view === 'create' ? (
               <form onSubmit={handleCreateTeam} className="space-y-4">
                 {error && (
-                  <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[12px] text-red-500 tracking-wide leading-relaxed">
+                  <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">
                     ⚠ {error}
                   </div>
                 )}
@@ -406,7 +404,7 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
             ) : (
               <form onSubmit={handleJoinTeam} className="space-y-4">
                 {error && (
-                  <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[12px] text-red-500 tracking-wide leading-relaxed">
+                  <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed">
                     ⚠ {error}
                   </div>
                 )}
@@ -417,9 +415,9 @@ export default function Dashboard({ loaderData }: { loaderData: any }) {
                   required
                   placeholder="A1B2C3D4"
                   maxLength={8}
-                  className="uppercase tracking-[8px] text-center font-['Press_Start_2P'] text-[#00f5ff]"
+                  className="uppercase tracking-[8px] text-center font-[family-name:var(--font-pixel)] text-pixel-cyan"
                 />
-                <p className="font-['VT323'] text-[24px] text-[#8892b0]">
+                <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
                   Note: The join code will automatically link you to the correct tournament.
                 </p>
                 <Button fullWidth type="submit" disabled={loading}>

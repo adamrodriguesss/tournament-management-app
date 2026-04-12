@@ -1,11 +1,13 @@
 import { supabase } from '../lib/supabase';
 
-/** Fetches tournaments with status 'registration_open' or 'ongoing'. */
+/** Fetches tournaments with status 'registration_open' or 'ongoing' and whose end_date hasn't passed. */
 export async function getActiveTournaments() {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const { data, error } = await supabase
     .from("tournaments")
     .select("*")
     .in("status", ["registration_open", "ongoing"])
+    .or(`end_date.gte.${today},end_date.is.null`)
     .order("created_at", { ascending: false });
   return { data: data || [], error };
 }
@@ -40,4 +42,27 @@ export async function createTournament(payload: {
 }) {
   const { error } = await supabase.from("tournaments").insert(payload);
   return { error };
+}
+
+/**
+ * Auto-marks tournaments and their events as 'completed'
+ * when the tournament's end_date has passed.
+ * Called lazily on public/participant page loads.
+ */
+export async function autoCompleteExpired() {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Mark tournaments whose end_date has passed as 'completed'
+  await supabase
+    .from("tournaments")
+    .update({ status: 'completed' })
+    .lt("end_date", today)
+    .neq("status", "completed");
+
+  // Mark events whose scheduled_at has passed as 'completed'
+  await supabase
+    .from("events")
+    .update({ status: 'completed' })
+    .lt("scheduled_at", new Date().toISOString())
+    .neq("status", "completed");
 }

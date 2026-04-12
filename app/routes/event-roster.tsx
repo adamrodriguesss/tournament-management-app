@@ -98,71 +98,70 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
     <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard">
   <div className="max-w-2xl w-full">
 
-    <button
-      className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] hover:text-[#e2b714] mb-6 transition-colors tracking-wide inline-block"
-      onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}
-    >
-      ← BACK
-    </button>
+    <div className="mb-6">
+      <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
+        BACK
+      </Button>
+    </div>
 
     <div
-      className="bg-[#1a1a2e] border-[3px] border-[#0f3460] p-6 md:p-8"
-      style={{ boxShadow: '3px 3px 0 #0f3460' }}
+      className="bg-pixel-panel border-[3px] border-pixel-border p-6 md:p-8"
+      style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
     >
       {/* Header */}
-      <div className="mb-6 border-b-2 border-[#0f3460] pb-6">
-        <h1 className="font-['Press_Start_2P'] text-[11px] text-[#e2b714] mb-3 leading-relaxed tracking-wide">
+      <div className="mb-6 border-b-2 border-pixel-border pb-6">
+        <h1 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold mb-3 leading-relaxed tracking-wide">
           MANAGE EVENT ROSTER
         </h1>
-        <p className="font-['VT323'] text-[24px] text-[#8892b0]">
+        <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
           Select the team members who will participate in this event.
         </p>
       </div>
 
       {/* Alerts */}
       {error && (
-        <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[12px] text-red-500 tracking-wide leading-relaxed mb-6">
+        <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-red tracking-wide leading-relaxed mb-6">
           ⚠ {error}
         </div>
       )}
       {success && (
-        <div className="border-2 border-[#00b82e] bg-[#00ff41]/10 p-3 font-['Press_Start_2P'] text-[12px] text-[#00b82e] tracking-wide leading-relaxed mb-6">
+        <div className="border-2 border-pixel-green-dim bg-pixel-green/10 p-3 font-[family-name:var(--font-pixel)] text-[12px] text-pixel-green-dim tracking-wide leading-relaxed mb-6">
           ✓ ROSTER UPDATED SUCCESSFULLY!
         </div>
       )}
 
       {/* Event / Team Info Grid */}
       <div
-        className="grid grid-cols-2 gap-4 mb-8 bg-[#12121a] border-2 border-[#0f3460] p-4"
+        className="grid grid-cols-2 gap-4 mb-8 bg-pixel-dark border-2 border-pixel-border p-4"
         style={{ boxShadow: 'inset 2px 2px 0 rgba(0,0,0,0.5)' }}
       >
         <div>
-          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-1">Event</p>
-          <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">{event.name}</p>
+          <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Event</p>
+          <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">{event.name}</p>
         </div>
         <div>
-          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-1">Team</p>
-          <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">{team.name}</p>
+          <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Team</p>
+          <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">{team.name}</p>
         </div>
 
         {/* Progress Bar */}
         <div className="col-span-2">
-          <p className="font-['Press_Start_2P'] text-[12px] text-[#8892b0] uppercase tracking-[2px] mb-2">Participants Limit</p>
+          <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-2">Participants Limit</p>
           <div className="flex items-center gap-3 w-full">
-            <div className="flex-1 h-[10px] bg-[#0a0a0f] border-2 border-[#0f3460]">
+            <div className="flex-1 h-[10px] bg-[#0a0a0f] border-2 border-pixel-border">
               <div
                 className={`h-full transition-all ${
                   maxParticipants && selectedIds.size > maxParticipants
-                    ? 'bg-red-500'
+                    ? 'bg-pixel-red'
                     : maxParticipants && selectedIds.size === maxParticipants
-                    ? 'bg-[#00b82e]'
-                    : 'bg-[#00b8c1]'
+                    ? 'bg-pixel-green-dim'
+                    : 'bg-pixel-cyan-dim'
                 }`}
                 style={{ width: maxParticipants ? `${Math.min((selectedIds.size / maxParticipants) * 100, 100)}%` : '100%' }}
               />
             </div>
-            <span className={`font-['Press_Start_2P'] text-[10px] ${
-              maxParticipants && selectedIds.size > maxParticipants ? 'text-red-400' : 'text-[#00f5ff]'
+            <span className={`font-[family-name:var(--font-pixel)] text-[10px] ${
+              maxParticipants && selectedIds.size > maxParticipants ? 'text-red-400' : 'text-pixel-cyan'
             }`}>
               {selectedIds.size} / {maxParticipants || '∞'}
             </span>
@@ -171,12 +170,12 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
       </div>
 
       {/* Member List */}
-      <h3 className="font-['Press_Start_2P'] text-[10px] text-[#8892b0] tracking-[2px] mb-3">
+      <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate tracking-[2px] mb-3">
         CONFIRMED MEMBERS
       </h3>
       <div className="space-y-2 mb-8">
         {approvedMembers.length === 0 ? (
-          <p className="font-['VT323'] text-[22px] text-[#8892b0]">No approved members found in this team.</p>
+          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">No approved members found in this team.</p>
         ) : (
           approvedMembers.map((member: any) => {
             const isSelected = selectedIds.has(member.id);
@@ -188,24 +187,24 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
                 onClick={() => { if (!isDisabled) handleToggle(member.id); }}
                 className={`flex items-center justify-between p-3 border-2 transition-all cursor-pointer select-none
                   ${isSelected
-                    ? 'bg-[#00f5ff]/5 border-[#00b8c1]'
-                    : 'bg-[#12121a] border-[#0f3460] hover:border-[#8892b0]'}
+                    ? 'bg-pixel-cyan/5 border-pixel-cyan-dim'
+                    : 'bg-pixel-dark border-pixel-border hover:border-pixel-slate'}
                   ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
                 `}
-                style={isSelected ? { boxShadow: '2px 2px 0 #00b8c1' } : {}}
+                style={isSelected ? { boxShadow: '2px 2px 0 var(--color-pixel-cyan-dim)' } : {}}
               >
                 <div className="flex items-center gap-3">
                   {/* Pixel checkbox */}
                   <div className={`w-[18px] h-[18px] border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                    ${isSelected ? 'bg-[#00b8c1] border-[#00f5ff]' : 'bg-[#0a0a0f] border-[#8892b0]'}
+                    ${isSelected ? 'bg-pixel-cyan-dim border-pixel-cyan' : 'bg-[#0a0a0f] border-pixel-slate'}
                   `}>
-                    {isSelected && <span className="text-[#0a0a0f] text-[11px] font-bold leading-none">✓</span>}
+                    {isSelected && <span className="text-pixel-black text-[11px] font-bold leading-none">✓</span>}
                   </div>
                   <div>
-                    <p className="font-['Press_Start_2P'] text-[10px] text-[#ccd6f6] leading-relaxed">
+                    <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
                       {member.users?.full_name}
                     </p>
-                    <p className="font-['VT323'] text-[24px] text-[#8892b0] capitalize">
+                    <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate capitalize">
                       {member.role_in_team}
                     </p>
                   </div>
@@ -217,7 +216,7 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex justify-end gap-3 pt-6 border-t-2 border-[#0f3460]">
+      <div className="flex justify-end gap-3 pt-6 border-t-2 border-pixel-border">
         <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
           CANCEL
         </Button>

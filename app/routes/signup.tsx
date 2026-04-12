@@ -47,9 +47,9 @@ export default function SignUp() {
     return (
       <AuthLayout title="Check your email" subtitle="We've sent a confirmation link">
         <div className="text-center space-y-6">
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-lg">
-            <p className="text-emerald-500 font-medium">
-              Registration successful! Please check your email to verify your account.
+          <div className="p-4 bg-pixel-green/10 border-2 border-pixel-green-dim">
+            <p className="text-pixel-green-dim font-[family-name:var(--font-pixel)] text-[10px] tracking-wide leading-relaxed">
+              ✓ Registration successful! Please check your email to verify your account.
             </p>
           </div>
           <Button fullWidth onClick={() => navigate('/login')}>

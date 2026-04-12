@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { getTournamentWithEvents, getTeamStandingsDetailed } from '../../services/public';
 import { getSession } from '../../services/auth';
 import { Button } from '../../components/ui/Button';
+import { formatToDDMMYY, formatToDDMMYYTime } from '../../lib/utils';
 import type { Route } from './+types/tournament-detail';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -55,12 +56,9 @@ const formatBadge = (f: string) => {
     {/* Header */}
     <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b-[3px] border-pixel-border bg-pixel-dark">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/tournaments')}
-          className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide"
-        >
-          ← BACK
-        </button>
+        <Button variant="secondary" onClick={() => navigate('/tournaments')}>
+          BACK
+        </Button>
         <h1 className="font-[family-name:var(--font-pixel)] text-[14px] text-pixel-gold tracking-wider">
           ★ FESTFLOW
         </h1>
@@ -85,8 +83,8 @@ const formatBadge = (f: string) => {
           </p>
         )}
         <div className="flex flex-wrap items-center gap-4 text-lg font-[family-name:var(--font-vt)] text-pixel-slate">
-          {tournament.start_date && <span>📅 {new Date(tournament.start_date).toLocaleDateString()}</span>}
-          {tournament.end_date && <span>→ {new Date(tournament.end_date).toLocaleDateString()}</span>}
+          {tournament.start_date && <span>📅 {formatToDDMMYY(tournament.start_date)}</span>}
+          {tournament.end_date && <span>→ {formatToDDMMYY(tournament.end_date)}</span>}
         </div>
       </div>
 
@@ -113,21 +111,32 @@ const formatBadge = (f: string) => {
             <div className="space-y-3">
               {events.map((event: any) => {
                 const fmt = formatBadge(event.format);
+                const isEnded = event.status === 'completed' || (event.scheduled_at && new Date(event.scheduled_at) < new Date());
+
                 return (
                   <div
                     key={event.id}
                     onClick={() => navigate(`/tournaments/${tournament.id}/events/${event.id}`)}
-                    className="bg-pixel-card border-[3px] border-pixel-border p-4 sm:p-5 cursor-pointer relative
-                      hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-100 group"
+                    className={`bg-pixel-card border-[3px] border-pixel-border p-4 sm:p-5 cursor-pointer relative
+                      transition-transform duration-100 group
+                      ${isEnded ? 'opacity-60' : 'hover:-translate-x-0.5 hover:-translate-y-0.5'}`}
                     style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
                   >
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-purple opacity-50" />
+                    <div className={`absolute top-0 left-0 right-0 h-[2px] opacity-50 ${isEnded ? 'bg-slate-600' : 'bg-pixel-purple'}`} />
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <h4 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light
-                        group-hover:text-pixel-gold transition-colors leading-relaxed tracking-wide">
-                        {event.name.toUpperCase()}
-                      </h4>
+                      <div className="flex flex-col gap-1">
+                        {isEnded && (
+                          <span className="font-[family-name:var(--font-pixel)] text-[8px] text-slate-500 tracking-wider">
+                            ✓ CONCLUDED
+                          </span>
+                        )}
+                        <h4 className={`font-[family-name:var(--font-pixel)] text-[12px]
+                          ${isEnded ? 'text-pixel-slate' : 'text-pixel-slate-light group-hover:text-pixel-gold transition-colors'}
+                          leading-relaxed tracking-wide`}>
+                          {event.name.toUpperCase()}
+                        </h4>
+                      </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`font-[family-name:var(--font-pixel)] text-[9px] px-2 py-0.5 border tracking-wide ${fmt.color}`}>
                           {fmt.label.toUpperCase()}
@@ -147,7 +156,7 @@ const formatBadge = (f: string) => {
                     <div className="flex flex-wrap items-center gap-3 text-lg font-[family-name:var(--font-vt)] text-pixel-slate">
                       <span className="capitalize">📌 {event.type}</span>
                       {event.venue && <span>📍 {event.venue}</span>}
-                      {event.scheduled_at && <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>}
+                      {event.scheduled_at && <span>🕐 {formatToDDMMYYTime(event.scheduled_at)}</span>}
                       <span>🏅 {event.points_first}/{event.points_second}/{event.points_third} pts</span>
                     </div>
                   </div>

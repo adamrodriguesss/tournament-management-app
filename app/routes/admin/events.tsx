@@ -6,6 +6,7 @@ import { getEventsByTournament, createEvent, getEventManagers, assignEventManage
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AdminLayout } from '../../components/layout/AdminLayout';
+import { formatToDDMMYYTime } from '../../lib/utils';
 import type { Route } from './+types/events';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -54,7 +55,7 @@ type EventManager = {
 
 type LoaderData = {
   user: { role: string; full_name: string; email: string; id: string };
-  tournament: { id: string; name: string; status: string };
+  tournament: { id: string; name: string; status: string; start_date: string | null; end_date: string | null };
   events: EventRow[];
   eventManagers: EventManager[];
 };
@@ -80,10 +81,33 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Compute min/max for the datetime-local picker from tournament dates
+  const datePickerMin = tournament.start_date
+    ? `${tournament.start_date}T00:00`
+    : undefined;
+  const datePickerMax = tournament.end_date
+    ? `${tournament.end_date}T23:59`
+    : undefined;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate scheduled_at falls within tournament date range
+    if (scheduledAt) {
+      const eventDate = new Date(scheduledAt);
+      if (tournament.start_date && eventDate < new Date(`${tournament.start_date}T00:00:00`)) {
+        setError(`Event date cannot be before the tournament start date (${tournament.start_date}).`);
+        setLoading(false);
+        return;
+      }
+      if (tournament.end_date && eventDate > new Date(`${tournament.end_date}T23:59:59`)) {
+        setError(`Event date cannot be after the tournament end date (${tournament.end_date}).`);
+        setLoading(false);
+        return;
+      }
+    }
 
     const { error: insertError } = await createEvent({
       tournament_id: tournament.id,
@@ -166,9 +190,9 @@ const pixelTextarea = `
   return (
   <AdminLayout user={user} activeItem="Event Management" tournamentName={tournament.name}>
     <div className="mb-2">
-      <button onClick={() => navigate('/admin/tournaments')} className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
-        ← BACK
-      </button>
+      <Button variant="secondary" onClick={() => navigate('/admin/tournaments')}>
+        BACK
+      </Button>
     </div>
 
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -239,7 +263,19 @@ const pixelTextarea = `
             <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Main Auditorium" />
             <div className="w-full flex flex-col space-y-2">
               <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Scheduled At</label>
-              <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} className={pixelSelect} />
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                min={datePickerMin}
+                max={datePickerMax}
+                className={pixelSelect}
+              />
+              {tournament.start_date && tournament.end_date && (
+                <p className="font-[family-name:var(--font-vt)] text-[20px] text-pixel-slate">
+                  Must be between {tournament.start_date} and {tournament.end_date}
+                </p>
+              )}
             </div>
           </div>
 
@@ -296,7 +332,7 @@ const pixelTextarea = `
 
             <div className="flex flex-wrap gap-4 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate mb-4">
               {e.venue && <span>📍 {e.venue}</span>}
-              {e.scheduled_at && <span>🕐 {new Date(e.scheduled_at).toLocaleString()}</span>}
+              {e.scheduled_at && <span>🕐 {formatToDDMMYYTime(e.scheduled_at)}</span>}
             </div>
 
             <div className="flex flex-wrap gap-3 items-center">

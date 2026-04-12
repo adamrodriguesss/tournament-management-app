@@ -19,6 +19,10 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   // Fetch event details
   const { data: event } = await supabase.from('events').select('*, tournaments(name)').eq('id', eventId).single();
   if (!event || event.format !== 'judged') return redirect("/admin/tournaments");
+  
+  if (user.role === 'event_manager' && event.assigned_to !== session.user.id) {
+    return redirect("/event-manager");
+  }
 
   // Fetch confirmed registrations
   const { data: registrations, error: regError } = await getConfirmedRegistrationsByEvent(eventId);
@@ -110,10 +114,19 @@ export default function AdminJudgedResults({ loaderData }: { loaderData: any }) 
 return (
   <AdminLayout user={user} activeItem="Event Management" tournamentName={event.tournaments?.name}>
     <div className="mb-4">
-      <button onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}
-        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide">
-        ← BACK
-      </button>
+      {user.role === 'event_manager' ? (
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => navigate('/event-manager')}>
+            BACK
+          </Button>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <Button variant="secondary" onClick={() => navigate(`/admin/tournaments/${event.tournament_id}/events`)}>
+            BACK
+          </Button>
+        </div>
+      )}
     </div>
 
     <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">

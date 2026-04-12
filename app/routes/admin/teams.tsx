@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
 import { getTournamentById } from '../../services/tournaments';
@@ -65,6 +66,17 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   const revalidator = useRevalidator();
   const { user, tournament, teams, participants } = loaderData;
 
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+
+  const toggleTeam = (teamId: string) => {
+    setExpandedTeams((prev) => {
+      const next = new Set(prev);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  };
+
   const handleConfirmTeam = async (teamId: string) => {
     await updateTeamStatus(teamId, 'confirmed');
     revalidator.revalidate();
@@ -90,22 +102,19 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   //teams.tsx
   const statusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed':    return 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim';
+      case 'confirmed': return 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim';
       case 'rejected':
       case 'disqualified': return 'bg-pixel-red/10 text-pixel-red border-pixel-red';
-      default:             return 'bg-amber-500/10 text-amber-400 border-amber-500';
+      default: return 'bg-amber-500/10 text-amber-400 border-amber-500';
     }
   };
 
   return (
     <AdminLayout user={user} activeItem="Team Approvals" tournamentName={tournament.name}>
       <div className="mb-2">
-        <button
-          onClick={() => navigate('/admin/tournaments')}
-          className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide"
-        >
-          ← BACK
-        </button>
+        <Button variant="secondary" onClick={() => navigate('/admin/tournaments')}>
+          BACK
+        </Button>
       </div>
 
       <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
@@ -183,10 +192,20 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                         DISQUALIFY
                       </Button>
                     )}
+                    {team.status === 'disqualified' && (
+                      <Button variant="primary" onClick={() => handleConfirmTeam(team.id)}>
+                        REQUALIFY
+                      </Button>
+                    )}
+                    <Button variant="secondary" onClick={() => toggleTeam(team.id)}>
+                      {expandedTeams.has(team.id) ? '▲ HIDE' : '▼ SHOW'}
+                    </Button>
                   </div>
                 </div>
 
-                {teamParts.length > 0 ? (
+                {expandedTeams.has(team.id) && (
+                  <div className="border-t-[3px] border-pixel-border">
+                    {teamParts.length > 0 ? (
                   <>
                     {/* Desktop Table */}
                     <div className="hidden sm:block overflow-x-auto">
@@ -256,6 +275,8 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                     <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
                       No participants have joined this team yet.
                     </p>
+                  </div>
+                )}
                   </div>
                 )}
               </div>

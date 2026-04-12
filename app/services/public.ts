@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-/** Fetches all tournaments, ordered by start date. */
+/** Fetches all tournaments, ordered by start date (active first, then completed). */
 export async function getPublicTournaments() {
   const { data, error } = await supabase
     .from("tournaments")

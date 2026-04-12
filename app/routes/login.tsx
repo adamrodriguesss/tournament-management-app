@@ -39,7 +39,7 @@ export default function Login() {
     <AuthLayout title="WELCOME BACK" subtitle="Insert coin to continue">
   <form onSubmit={handleLogin} className="space-y-5">
     {error && (
-      <div className="border-2 border-red-500 bg-red-500/10 p-3 font-['Press_Start_2P'] text-[10px] text-red-500 tracking-wide leading-relaxed">
+      <div className="border-2 border-pixel-red bg-pixel-red/10 p-3 font-[family-name:var(--font-pixel)] text-[10px] text-pixel-red tracking-wide leading-relaxed">
         ⚠ {error}
       </div>
     )}
@@ -67,11 +67,11 @@ export default function Login() {
       {loading ? 'LOADING...' : 'SIGN IN'}
     </Button>
 
-    <div className="text-center mt-6 border-t-2 border-[#0f3460] pt-5">
-      <span className="text-[#8892b0] font-['VT323'] text-lg">Don't have an account? </span>
+    <div className="text-center mt-6 border-t-2 border-pixel-border pt-5">
+      <span className="text-pixel-slate font-[family-name:var(--font-vt)] text-lg">Don't have an account? </span>
       <NavLink
         to="/signup"
-        className="font-['Press_Start_2P'] text-[10px] text-[#e2b714] hover:text-[#00f5ff] transition-colors tracking-wide"
+        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-gold hover:text-pixel-cyan transition-colors tracking-wide"
       >
         SIGN UP
       </NavLink>

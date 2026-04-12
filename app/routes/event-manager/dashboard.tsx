@@ -3,6 +3,7 @@ import { getSession, getRoleProfile } from '../../services/auth';
 import { getEventsAssignedTo } from '../../services/events';
 import { Button } from '../../components/ui/Button';
 import { AppLayout } from '../../components/layout/AdminLayout';
+import { formatToDDMMYYTime } from '../../lib/utils';
 
 export async function clientLoader() {
   const session = await getSession();
@@ -116,7 +117,7 @@ export default function EventManagerDashboard({ loaderData }: { loaderData: Load
 
               <div className="flex flex-wrap gap-4 font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate mb-4">
                 {event.venue && <span>📍 {event.venue}</span>}
-                {event.scheduled_at && <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>}
+                {event.scheduled_at && <span>🕐 {formatToDDMMYYTime(event.scheduled_at)}</span>}
                 <span className="capitalize">📌 {event.type} event</span>
               </div>
 

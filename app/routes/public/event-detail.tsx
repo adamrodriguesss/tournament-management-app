@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { getPublicEvent, getPublicMatches, getPublicEventResults } from '../../services/public';
 import { getSession } from '../../services/auth';
 import { Button } from '../../components/ui/Button';
+import { formatToDDMMYYTime } from '../../lib/utils';
 import type { Route } from './+types/event-detail';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -50,12 +51,9 @@ return (
     {/* Header */}
     <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b-[3px] border-pixel-border bg-pixel-dark">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(`/tournaments/${tournamentId}`)}
-          className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-slate hover:text-pixel-gold transition-colors tracking-wide"
-        >
-          ← BACK
-        </button>
+        <Button variant="secondary" onClick={() => navigate(`/tournaments/${tournamentId}`)}>
+          BACK
+        </Button>
         <h1 className="font-[family-name:var(--font-pixel)] text-[14px] text-pixel-gold tracking-wider">
           {event.tournaments?.name?.toUpperCase() || 'FESTFLOW'}
         </h1>
@@ -100,7 +98,7 @@ return (
         <div className="flex flex-wrap items-center gap-4 text-lg font-[family-name:var(--font-vt)] text-pixel-slate">
           <span className="capitalize">📌 {event.type} event</span>
           {event.venue && <span>📍 {event.venue}</span>}
-          {event.scheduled_at && <span>🕐 {new Date(event.scheduled_at).toLocaleString()}</span>}
+          {event.scheduled_at && <span>🕐 {formatToDDMMYYTime(event.scheduled_at)}</span>}
           <span>🏅 {event.points_first}/{event.points_second}/{event.points_third} pts</span>
         </div>
       </div>

@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router';
 import { getPublicTournaments } from '../../services/public';
 import { getSession } from '../../services/auth';
+import { autoCompleteExpired } from '../../services/tournaments';
 import { Button } from '../../components/ui/Button';
+import { formatToDDMMYY } from '../../lib/utils';
 
 export async function clientLoader() {
   const session = await getSession();
+  await autoCompleteExpired();
   const { data: tournaments } = await getPublicTournaments();
   return { tournaments, isLoggedIn: !!session };
 }
@@ -71,24 +74,37 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tournaments.map((t: any) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tournaments.map((t: any) => {
+            const isEnded = t.status === 'completed' || (t.end_date && new Date(t.end_date) < new Date());
+            return (
             <div
               key={t.id}
               onClick={() => navigate(`/tournaments/${t.id}`)}
-              className="bg-pixel-card border-[3px] border-pixel-border p-6 cursor-pointer relative
-                hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform duration-100 group"
+              className={`bg-pixel-card border-[3px] border-pixel-border p-6 cursor-pointer relative
+                transition-transform duration-100 group
+                ${isEnded ? 'opacity-60' : 'hover:-translate-x-0.5 hover:-translate-y-0.5'}`}
               style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-[3px]"
-                style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
+                style={{ background: isEnded
+                  ? 'linear-gradient(90deg, #64748b, #475569)'
+                  : 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
               />
 
               <div className="flex items-start justify-between gap-3 mb-3">
-                <h3 className="font-[family-name:var(--font-pixel)] text-[13px] text-pixel-slate-light
-                  group-hover:text-pixel-gold transition-colors leading-relaxed tracking-wide">
-                  {t.name.toUpperCase()}
-                </h3>
+                <div className="flex flex-col gap-1">
+                  {isEnded && (
+                    <span className="font-[family-name:var(--font-pixel)] text-[8px] text-slate-500 tracking-wider">
+                      ✓ CONCLUDED
+                    </span>
+                  )}
+                  <h3 className={`font-[family-name:var(--font-pixel)] text-[13px]
+                    leading-relaxed tracking-wide
+                    ${isEnded ? 'text-pixel-slate' : 'text-pixel-slate-light group-hover:text-pixel-gold transition-colors'}`}>
+                    {t.name.toUpperCase()}
+                  </h3>
+                </div>
                 <span className={`font-[family-name:var(--font-pixel)] text-[10px] px-3 py-1 border-2 shrink-0 tracking-wide leading-relaxed ${statusColor(t.status)}`}>
                   {statusLabel(t.status).toUpperCase()}
                 </span>
@@ -101,11 +117,12 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
               )}
 
               <div className="flex flex-wrap items-center gap-4 text-lg font-[family-name:var(--font-vt)] text-pixel-slate border-t-2 border-pixel-border pt-3 mt-3">
-                {t.start_date && <span>📅 {new Date(t.start_date).toLocaleDateString()}</span>}
-                {t.end_date && <span>→ {new Date(t.end_date).toLocaleDateString()}</span>}
+                {t.start_date && <span>📅 {formatToDDMMYY(t.start_date)}</span>}
+                {t.end_date && <span>→ {formatToDDMMYY(t.end_date)}</span>}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </main>

@@ -79,12 +79,11 @@ export default function TeamView({ loaderData }: { loaderData: any }) {
   <AppLayout user={{ ...profile, role: 'participant' }} activeItem="Dashboard" contextTitle={team.tournaments?.name}>
     <div className="max-w-4xl mx-auto">
 
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate hover:text-pixel-gold mb-6 transition-colors tracking-wide inline-block"
-      >
-        ← BACK
-      </button>
+      <div className="mb-6">
+        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+          BACK
+        </Button>
+      </div>
 
       <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
         <h2 className="font-[family-name:var(--font-pixel)] text-[26px] text-pixel-gold leading-relaxed tracking-wide">

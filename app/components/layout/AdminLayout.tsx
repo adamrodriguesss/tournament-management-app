@@ -167,11 +167,13 @@ return (
 
     {/* ── Desktop Sidebar ── */}
     <aside
-      className={`hidden md:flex flex-col h-full overflow-y-auto bg-pixel-dark border-r-[3px] border-pixel-border shrink-0 transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'w-64' : 'w-0 overflow-hidden border-r-0'
+      className={`hidden md:flex flex-col h-full overflow-x-hidden overflow-y-auto bg-pixel-dark border-r-[3px] border-pixel-border shrink-0 transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'w-64' : 'w-0 border-r-0'
       }`}
     >
-      <SidebarContent onNav={() => {}} />
+      <div className="w-64 flex flex-col min-h-full">
+        <SidebarContent onNav={() => {}} />
+      </div>
     </aside>
 
     {/* ── Main Content ── */}

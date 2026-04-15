@@ -22,47 +22,48 @@ export async function getTournamentWithEvents(tournamentId: string) {
   };
 }
 
-/** Aggregates team standings for a tournament by total points from event_results. */
 export async function getTeamStandings(tournamentId: string) {
-  const { data, error } = await supabase
+  const { data: teams, error: teamsError } = await supabase
+    .from("teams")
+    .select("id, name, department")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "confirmed");
+
+  if (teamsError) return { data: [], error: teamsError };
+
+  const { data: results, error: resultsError } = await supabase
     .from("event_results")
     .select(`
       points_awarded,
-      team:team_id (
-        id, name, department, tournament_id
-      ),
-      event:event_id (
-        tournament_id
-      )
-    `)
-    .order("points_awarded", { ascending: false });
+      team_id,
+      event:event_id (tournament_id)
+    `);
 
-  if (error) return { data: [], error };
+  if (resultsError) return { data: [], error: resultsError };
 
   // Filter to only this tournament's results and aggregate by team
   const standings = new Map<string, { id: string; name: string; department: string; totalPoints: number; golds: number; silvers: number; bronzes: number }>();
 
-  for (const row of (data || [])) {
+  for (const team of (teams || [])) {
+    standings.set(team.id, {
+      id: team.id,
+      name: team.name,
+      department: team.department,
+      totalPoints: 0,
+      golds: 0,
+      silvers: 0,
+      bronzes: 0,
+    });
+  }
+
+  for (const row of (results || [])) {
     const event = row.event as any;
-    const team = row.team as any;
-    if (!team || !event || event.tournament_id !== tournamentId) continue;
+    if (!event || event.tournament_id !== tournamentId) continue;
 
-    if (!standings.has(team.id)) {
-      standings.set(team.id, {
-        id: team.id,
-        name: team.name,
-        department: team.department,
-        totalPoints: 0,
-        golds: 0,
-        silvers: 0,
-        bronzes: 0,
-      });
-    }
-    const entry = standings.get(team.id)!;
+    const entry = standings.get(row.team_id);
+    if (!entry) continue;
+
     entry.totalPoints += row.points_awarded;
-
-    // Determine medal from position (we don't have position directly, infer from points)
-    // Actually let's query position too
   }
 
   return { data: Array.from(standings.values()).sort((a, b) => b.totalPoints - a.totalPoints), error: null };
@@ -70,28 +71,50 @@ export async function getTeamStandings(tournamentId: string) {
 
 /** Fetches team standings with position info. */
 export async function getTeamStandingsDetailed(tournamentId: string) {
-  const { data, error } = await supabase
+  // First get all confirmed teams for this tournament
+  const { data: teams, error: teamsError } = await supabase
+    .from("teams")
+    .select("id, name, department")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "confirmed");
+
+  if (teamsError) return { data: [], error: teamsError };
+
+  // Then get all event results
+  const { data: results, error: resultsError } = await supabase
     .from("event_results")
     .select(`
       points_awarded,
       position,
-      team:team_id (id, name, department, tournament_id),
+      team_id,
       event:event_id (tournament_id)
     `);
 
-  if (error) return { data: [], error };
+  if (resultsError) return { data: [], error: resultsError };
 
   const standings = new Map<string, { id: string; name: string; department: string; totalPoints: number; golds: number; silvers: number; bronzes: number }>();
 
-  for (const row of (data || [])) {
-    const event = row.event as any;
-    const team = row.team as any;
-    if (!team || !event || event.tournament_id !== tournamentId) continue;
+  // Initialize all confirmed teams with 0 points
+  for (const team of (teams || [])) {
+    standings.set(team.id, { 
+      id: team.id, 
+      name: team.name, 
+      department: team.department, 
+      totalPoints: 0, 
+      golds: 0, 
+      silvers: 0, 
+      bronzes: 0 
+    });
+  }
 
-    if (!standings.has(team.id)) {
-      standings.set(team.id, { id: team.id, name: team.name, department: team.department, totalPoints: 0, golds: 0, silvers: 0, bronzes: 0 });
-    }
-    const entry = standings.get(team.id)!;
+  // Tally points
+  for (const row of (results || [])) {
+    const event = row.event as any;
+    if (!event || event.tournament_id !== tournamentId) continue;
+
+    const entry = standings.get(row.team_id);
+    if (!entry) continue; // Team might not be in our list
+
     entry.totalPoints += row.points_awarded;
     if (row.position === 1) entry.golds++;
     else if (row.position === 2) entry.silvers++;

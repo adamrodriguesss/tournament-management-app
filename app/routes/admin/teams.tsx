@@ -5,6 +5,8 @@ import { getTournamentById } from '../../services/tournaments';
 import { getTeamsByTournament, updateTeamStatus } from '../../services/teams';
 import { getParticipantsByTeamIds } from '../../services/participants';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import type { Route } from './+types/teams';
 
@@ -99,15 +101,6 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
   //   }
   // };
 
-  //teams.tsx
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim';
-      case 'rejected':
-      case 'disqualified': return 'bg-pixel-red/10 text-pixel-red border-pixel-red';
-      default: return 'bg-amber-500/10 text-amber-400 border-amber-500';
-    }
-  };
 
   return (
     <AdminLayout user={user} activeItem="Team Approvals" tournamentName={tournament.name}>
@@ -127,18 +120,11 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
       </div>
 
       {teams.length === 0 ? (
-        <div
-          className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center"
-          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
-        >
-          <span className="text-5xl mb-4 block opacity-40">👥</span>
-          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">
-            NO TEAMS REGISTERED
-          </h3>
-          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
-            No teams have registered for this tournament yet.
-          </p>
-        </div>
+        <EmptyState
+          icon="👥"
+          title="NO TEAMS REGISTERED"
+          description="No teams have registered for this tournament yet."
+        />
       ) : (
         <div className="space-y-6">
           {teams.map((team) => {
@@ -164,9 +150,7 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                       <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
                         {team.name.toUpperCase()}
                       </h3>
-                      <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border-2 tracking-wide ${statusBadge(team.status)}`}>
-                        {team.status.toUpperCase()}
-                      </span>
+                      <Badge status={team.status} />
                       {pendingCount > 0 && (
                         <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/40 tracking-wide">
                           {pendingCount} PENDING
@@ -238,9 +222,7 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                                 {p.role_in_team}
                               </td>
                               <td className="px-5 py-3">
-                                <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border tracking-wide ${statusBadge(p.status)}`}>
-                                  {p.status.toUpperCase()}
-                                </span>
+                                <Badge status={p.status} />
                               </td>
                             </tr>
                           ))}
@@ -256,9 +238,7 @@ export default function AdminTeams({ loaderData }: { loaderData: LoaderData }) {
                             <p className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">
                               {p.users?.full_name || '—'}
                             </p>
-                            <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-0.5 border tracking-wide ${statusBadge(p.status)}`}>
-                              {p.status.toUpperCase()}
-                            </span>
+                            <Badge status={p.status} />
                           </div>
                           <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate">
                             {p.users?.email || '—'}

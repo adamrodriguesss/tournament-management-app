@@ -253,6 +253,9 @@ export async function recordMatchScore(
       points_awarded: event.points_second,
       recorded_by: adminId
     }, { onConflict: 'event_id, position' });
+
+    // Mark event as completed
+    await supabase.from('events').update({ status: 'completed' }).eq('id', match.event_id);
   }
 
   return { error: null };

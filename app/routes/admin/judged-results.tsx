@@ -4,6 +4,7 @@ import { getSession, getRoleProfile } from '../../services/auth';
 import { getEventRegistrationDetails, getConfirmedRegistrationsByEvent, recordJudgedResults, getEventResults } from '../../services/events';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import type { Route } from './+types/judged-results';
 
@@ -185,11 +186,16 @@ return (
                     <span className="font-[family-name:var(--font-pixel)] text-[10px] text-amber-400 leading-relaxed">🥇 1ST PLACE</span>
                     <p className="font-[family-name:var(--font-vt)] text-[24px] text-amber-400/70 mt-0.5">{event.points_first} pts</p>
                   </div>
-                  <select value={firstPlace} onChange={(e) => setFirstPlace(e.target.value)} required
-                    className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-amber-500/50 [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
-                    <option value="">-- Select Winner --</option>
-                    {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
-                  </select>
+                  <Select
+                    value={firstPlace}
+                    onChange={(e) => setFirstPlace(e.target.value)}
+                    required
+                    className="flex-1 focus:border-amber-500/50"
+                    options={[
+                      { value: "", label: "-- Select Winner --" },
+                      ...options.map((opt: any) => ({ value: opt.teamId, label: opt.label }))
+                    ]}
+                  />
                 </div>
 
                 {/* 2nd Place */}
@@ -199,11 +205,15 @@ return (
                       <span className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light leading-relaxed">🥈 2ND PLACE</span>
                       <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-0.5">{event.points_second} pts</p>
                     </div>
-                    <select value={secondPlace} onChange={(e) => setSecondPlace(e.target.value)}
-                      className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-pixel-slate [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
-                      <option value="">-- Optional --</option>
-                      {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
-                    </select>
+                    <Select
+                      value={secondPlace}
+                      onChange={(e) => setSecondPlace(e.target.value)}
+                      className="flex-1 focus:border-pixel-slate"
+                      options={[
+                        { value: "", label: "-- Optional --" },
+                        ...options.map((opt: any) => ({ value: opt.teamId, label: opt.label }))
+                      ]}
+                    />
                   </div>
                 )}
 
@@ -214,11 +224,15 @@ return (
                       <span className="font-[family-name:var(--font-pixel)] text-[10px] text-orange-400 leading-relaxed">🥉 3RD PLACE</span>
                       <p className="font-[family-name:var(--font-vt)] text-[24px] text-orange-400/70 mt-0.5">{event.points_third} pts</p>
                     </div>
-                    <select value={thirdPlace} onChange={(e) => setThirdPlace(e.target.value)}
-                      className="flex-1 bg-pixel-black border-[3px] border-pixel-border text-pixel-slate-light font-[family-name:var(--font-vt)] text-[22px] px-3 py-2 outline-none focus:border-orange-500/50 [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]">
-                      <option value="">-- Optional --</option>
-                      {options.map((opt: any) => <option key={opt.teamId} value={opt.teamId}>{opt.label}</option>)}
-                    </select>
+                    <Select
+                      value={thirdPlace}
+                      onChange={(e) => setThirdPlace(e.target.value)}
+                      className="flex-1 focus:border-orange-500/50"
+                      options={[
+                        { value: "", label: "-- Optional --" },
+                        ...options.map((opt: any) => ({ value: opt.teamId, label: opt.label }))
+                      ]}
+                    />
                   </div>
                 )}
               </div>

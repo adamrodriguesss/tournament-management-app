@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { getPublicEvent, getPublicMatches, getPublicEventResults } from '../../services/public';
 import { getSession } from '../../services/auth';
 import { Button } from '../../components/ui/Button';
+import { Bracket } from '../../components/ui/Bracket';
 import { formatToDDMMYYTime } from '../../lib/utils';
 import type { Route } from './+types/event-detail';
 
@@ -151,7 +152,9 @@ return (
               🏆 BRACKET
             </h3>
           </div>
-          <BracketView matches={matches} />
+          <div className="bg-pixel-card border-[3px] border-pixel-border overload-hidden" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+            <Bracket matches={matches} isReadOnly={true} />
+          </div>
         </div>
       )}
 
@@ -173,152 +176,4 @@ return (
     </main>
   </div>
 );
-
-// BracketView
-function BracketView({ matches }: { matches: any[] }) {
-  const rounds = new Map<number, any[]>();
-  for (const m of matches) {
-    const r = m.round_number;
-    if (!rounds.has(r)) rounds.set(r, []);
-    rounds.get(r)!.push(m);
-  }
-  const sortedRounds = Array.from(rounds.entries()).sort((a, b) => a[0] - b[0]);
-  const totalRounds = sortedRounds.length;
-
-  const roundLabel = (roundNum: number, total: number) => {
-    if (roundNum === total) return 'FINAL';
-    if (roundNum === total - 1) return 'SEMIFINALS';
-    if (roundNum === total - 2) return 'QUARTERFINALS';
-    return `ROUND ${roundNum}`;
-  };
-
-  return (
-    <div className="flex gap-6 overflow-x-auto pb-4">
-      {sortedRounds.map(([roundNum, roundMatches]) => (
-        <div key={roundNum} className="flex flex-col gap-4 min-w-[220px]">
-          <h4 className="font-[family-name:var(--font-pixel)] text-[9px] text-pixel-gold uppercase tracking-widest text-center leading-relaxed">
-            {roundLabel(roundNum, totalRounds)}
-          </h4>
-          {roundMatches.map((match: any) => (
-            <div
-              key={match.id}
-              className="bg-pixel-dark border-[3px] border-pixel-border overflow-hidden"
-              style={{ boxShadow: '2px 2px 0 var(--color-pixel-border)' }}
-            >
-              <MatchSlot
-                team={match.team_a}
-                score={match.score_a}
-                isWinner={match.winner?.id === match.team_a?.id}
-                isCompleted={match.status === 'completed'}
-              />
-              <div className="border-t-2 border-pixel-border" />
-              <MatchSlot
-                team={match.team_b}
-                score={match.score_b}
-                isWinner={match.winner?.id === match.team_b?.id}
-                isCompleted={match.status === 'completed'}
-              />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MatchSlot({ team, score, isWinner, isCompleted }: {
-  team: any; score: number | null; isWinner: boolean; isCompleted: boolean;
-}) {
-  return (
-    <div className={`flex items-center justify-between px-3 py-2.5 ${isWinner && isCompleted ? 'bg-pixel-gold/10' : ''}`}>
-      <span className={`text-lg font-[family-name:var(--font-vt)] truncate
-        ${isCompleted
-          ? isWinner ? 'text-pixel-gold font-bold' : 'text-pixel-slate'
-          : 'text-pixel-slate-light'}`}>
-        {team?.name || <span className="text-pixel-border italic">TBD</span>}
-      </span>
-      {score !== null && score !== undefined && (
-        <span className={`font-[family-name:var(--font-pixel)] text-[11px] ml-3
-          ${isWinner ? 'text-pixel-gold' : 'text-pixel-slate'}`}>
-          {score}
-        </span>
-      )}
-    </div>
-  );
-}
-}
-
-/** Read-only bracket tree visualization */
-function BracketView({ matches }: { matches: any[] }) {
-  const rounds = new Map<number, any[]>();
-  for (const m of matches) {
-    const r = m.round_number;
-    if (!rounds.has(r)) rounds.set(r, []);
-    rounds.get(r)!.push(m);
-  }
-
-  const sortedRounds = Array.from(rounds.entries()).sort((a, b) => a[0] - b[0]);
-  const totalRounds = sortedRounds.length;
-
-  const roundLabel = (roundNum: number, totalRounds: number) => {
-    if (roundNum === totalRounds) return 'Final';
-    if (roundNum === totalRounds - 1) return 'Semifinals';
-    if (roundNum === totalRounds - 2) return 'Quarterfinals';
-    return `Round ${roundNum}`;
-  };
-
-  return (
-    <div className="flex gap-6 overflow-x-auto pb-4">
-      {sortedRounds.map(([roundNum, roundMatches]) => (
-        <div key={roundNum} className="flex flex-col gap-4 min-w-[220px]">
-          <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wide text-center">
-            {roundLabel(roundNum, totalRounds)}
-          </h4>
-          {roundMatches.map((match: any) => (
-            <div key={match.id} className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-              <MatchSlot
-                team={match.team_a}
-                score={match.score_a}
-                isWinner={match.winner?.id === match.team_a?.id}
-                isCompleted={match.status === 'completed'}
-              />
-              <div className="border-t border-slate-700" />
-              <MatchSlot
-                team={match.team_b}
-                score={match.score_b}
-                isWinner={match.winner?.id === match.team_b?.id}
-                isCompleted={match.status === 'completed'}
-              />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MatchSlot({ team, score, isWinner, isCompleted }: {
-  team: any;
-  score: number | null;
-  isWinner: boolean;
-  isCompleted: boolean;
-}) {
-  return (
-    <div className={`flex items-center justify-between px-3 py-2.5 ${isWinner && isCompleted ? 'bg-emerald-500/10' : ''}`}>
-      <span className={`text-sm truncate ${
-        isCompleted
-          ? isWinner ? 'font-bold text-emerald-400' : 'text-slate-500'
-          : 'text-slate-300'
-      }`}>
-        {team?.name || 'TBD'}
-      </span>
-      {score !== null && score !== undefined && (
-        <span className={`text-sm font-mono font-bold ml-3 ${
-          isWinner ? 'text-emerald-400' : 'text-slate-500'
-        }`}>
-          {score}
-        </span>
-      )}
-    </div>
-  );
 }

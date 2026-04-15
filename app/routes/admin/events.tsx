@@ -3,8 +3,17 @@ import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
 import { getTournamentById } from '../../services/tournaments';
 import { getEventsByTournament, createEvent, getEventManagers, assignEventManager, deleteEvent } from '../../services/events';
+import { getTeamStandingsDetailed } from '../../services/public';
 import { Button } from '../../components/ui/Button';
+import { StandingsCard } from '../../components/ui/StandingsCard';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { DatePicker } from '../../components/ui/DatePicker';
+import { TimePicker } from '../../components/ui/TimePicker';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Spinner } from '../../components/ui/Spinner';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import { formatToDDMMYYTime } from '../../lib/utils';
 import type { Route } from './+types/events';
@@ -25,12 +34,14 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 
   const { data: events } = await getEventsByTournament(tournamentId);
   const { data: eventManagers } = await getEventManagers();
+  const { data: standings } = await getTeamStandingsDetailed(tournamentId);
 
   return {
     user: { ...user, id: session.user.id },
     tournament,
     events,
     eventManagers,
+    standings,
   };
 }
 
@@ -58,12 +69,13 @@ type LoaderData = {
   tournament: { id: string; name: string; status: string; start_date: string | null; end_date: string | null };
   events: EventRow[];
   eventManagers: EventManager[];
+  standings: any[];
 };
 
 export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { user, tournament, events, eventManagers } = loaderData;
+  const { user, tournament, events, eventManagers, standings } = loaderData;
 
   const [showCreate, setShowCreate] = useState(false);
   const [assigningEventId, setAssigningEventId] = useState<string | null>(null);
@@ -75,28 +87,33 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
   const [pointsSecond, setPointsSecond] = useState('6');
   const [pointsThird, setPointsThird] = useState('3');
   const [venue, setVenue] = useState('');
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('12:00');
   const [maxParticipants, setMaxParticipants] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Compute min/max for the datetime-local picker from tournament dates
-  const datePickerMin = tournament.start_date
-    ? `${tournament.start_date}T00:00`
-    : undefined;
-  const datePickerMax = tournament.end_date
-    ? `${tournament.end_date}T23:59`
-    : undefined;
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    eventId: string | null;
+    eventName: string;
+  }>({ isOpen: false, eventId: null, eventName: '' });
+
+  // Compute min/max for the date picker from tournament dates
+  const datePickerMin = tournament.start_date || undefined;
+  const datePickerMax = tournament.end_date || undefined;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const combinedScheduledAt = scheduledDate && scheduledTime ? `${scheduledDate}T${scheduledTime}` : scheduledDate || null;
+
     // Validate scheduled_at falls within tournament date range
-    if (scheduledAt) {
-      const eventDate = new Date(scheduledAt);
+    if (combinedScheduledAt) {
+      const eventDate = new Date(combinedScheduledAt);
       if (tournament.start_date && eventDate < new Date(`${tournament.start_date}T00:00:00`)) {
         setError(`Event date cannot be before the tournament start date (${tournament.start_date}).`);
         setLoading(false);
@@ -119,7 +136,7 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
       points_second: parseInt(pointsSecond, 10),
       points_third: parseInt(pointsThird, 10),
       venue: venue || null,
-      scheduled_at: scheduledAt || null,
+      scheduled_at: combinedScheduledAt,
       status: 'upcoming',
       created_by: user.id,
       max_participants_per_team: type === 'team' && maxParticipants ? parseInt(maxParticipants, 10) : null
@@ -139,7 +156,8 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
     setPointsSecond('6');
     setPointsThird('3');
     setVenue('');
-    setScheduledAt('');
+    setScheduledDate('');
+    setScheduledTime('12:00');
     setMaxParticipants('');
     setShowCreate(false);
     setLoading(false);
@@ -153,21 +171,20 @@ export default function AdminEvents({ loaderData }: { loaderData: LoaderData }) 
     revalidator.revalidate();
   };
 
-  const handleDelete = async (eventId: string, eventName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${eventName}"? This will permanently remove all registrations, matches, and results for this event.`)) {
-      return;
-    }
-    await deleteEvent(eventId);
-    revalidator.revalidate();
+  const handleDeleteClick = (eventId: string, eventName: string) => {
+    setConfirmModal({ isOpen: true, eventId, eventName });
   };
 
-  const statusColor = (s: string) => {
-    switch (s) {
-      case 'upcoming': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case 'ongoing': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'cancelled': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+  const confirmDelete = async () => {
+    if (confirmModal.eventId) {
+      await deleteEvent(confirmModal.eventId);
+      revalidator.revalidate();
     }
+    setConfirmModal({ isOpen: false, eventId: null, eventName: '' });
+  };
+
+  const cancelDelete = () => {
+    setConfirmModal({ isOpen: false, eventId: null, eventName: '' });
   };
 
   const pixelSelect = `
@@ -202,12 +219,14 @@ const pixelTextarea = `
         </h1>
         <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-1">Event Management</p>
       </div>
-      <Button onClick={() => setShowCreate(!showCreate)}>
+      <Button variant={showCreate ? 'danger' : 'primary'} onClick={() => setShowCreate(!showCreate)}>
         {showCreate ? 'CANCEL' : '+ NEW EVENT'}
       </Button>
     </div>
 
-    {/* Create Form */}
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="xl:col-span-2">
+        {/* Create Form */}
     {showCreate && (
       <div
         className="bg-pixel-panel border-[3px] border-pixel-border p-5 mb-8 relative"
@@ -233,20 +252,24 @@ const pixelTextarea = `
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="w-full flex flex-col space-y-2">
-              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Event Type</label>
-              <select value={type} onChange={(e) => setType(e.target.value)} className={pixelSelect}>
-                <option value="team">Team Based (e.g. Football)</option>
-                <option value="individual">Individual (e.g. Solo Dance)</option>
-              </select>
-            </div>
-            <div className="w-full flex flex-col space-y-2">
-              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Event Format</label>
-              <select value={format} onChange={(e) => setFormat(e.target.value)} className={pixelSelect}>
-                <option value="bracket">Tournament Bracket (Matches)</option>
-                <option value="judged">Judged (1st/2nd/3rd Result Entry)</option>
-              </select>
-            </div>
+            <Select
+              label="Event Type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              options={[
+                { value: "team", label: "Team Based (e.g. Football)" },
+                { value: "individual", label: "Individual (e.g. Solo Dance)" }
+              ]}
+            />
+            <Select
+              label="Event Format"
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+              options={[
+                { value: "bracket", label: "Tournament Bracket (Matches)" },
+                { value: "judged", label: "Judged (1st/2nd/3rd Result Entry)" }
+              ]}
+            />
           </div>
 
           {type === 'team' && (
@@ -259,28 +282,31 @@ const pixelTextarea = `
             <Input label="3rd Place Pts" type="number" value={pointsThird} onChange={(e) => setPointsThird(e.target.value)} required min={0} />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Main Auditorium" />
-            <div className="w-full flex flex-col space-y-2">
-              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Scheduled At</label>
-              <input
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
-                min={datePickerMin}
-                max={datePickerMax}
-                className={pixelSelect}
-              />
-              {tournament.start_date && tournament.end_date && (
-                <p className="font-[family-name:var(--font-vt)] text-[20px] text-pixel-slate">
-                  Must be between {tournament.start_date} and {tournament.end_date}
-                </p>
-              )}
-            </div>
+            <DatePicker
+              label="Event Date"
+              value={scheduledDate}
+              onChange={(val) => setScheduledDate(val)}
+              min={datePickerMin}
+              max={datePickerMax}
+              required
+            />
+            <TimePicker
+              label="Event Time"
+              value={scheduledTime}
+              onChange={(val) => setScheduledTime(val)}
+              required
+            />
           </div>
+          {tournament.start_date && tournament.end_date && (
+            <p className="font-[family-name:var(--font-vt)] text-[20px] text-pixel-slate -mt-2">
+              Event date must be between {tournament.start_date} and {tournament.end_date}
+            </p>
+          )}
 
           <Button fullWidth type="submit" disabled={loading}>
-            {loading ? 'CREATING...' : 'CREATE EVENT'}
+            {loading ? <div className="flex items-center justify-center gap-2"><Spinner size="sm"/> <span>CREATING...</span></div> : 'CREATE EVENT'}
           </Button>
         </form>
       </div>
@@ -288,11 +314,11 @@ const pixelTextarea = `
 
     {/* Events List */}
     {events.length === 0 ? (
-      <div className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
-        <span className="text-5xl mb-4 block opacity-40">🗓️</span>
-        <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">NO EVENTS YET</h3>
-        <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">Create the first event for this tournament.</p>
-      </div>
+      <EmptyState
+        icon="🗓️"
+        title="NO EVENTS YET"
+        description="Create the first event for this tournament."
+      />
     ) : (
       <div className="space-y-4">
         {events.map((e) => (
@@ -307,9 +333,7 @@ const pixelTextarea = `
               <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
                 {e.name.toUpperCase()}
               </h3>
-              <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border self-start sm:self-auto tracking-wide ${statusColor(e.status)}`}>
-                {e.status.toUpperCase()}
-              </span>
+              <Badge status={e.status} />
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -339,17 +363,20 @@ const pixelTextarea = `
               {/* Assign Manager */}
               <div className="flex items-center gap-2">
                 <span className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate tracking-wide">ASSIGNED TO:</span>
-                <select
-                  value={e.assigned_to || ''}
-                  onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
-                  disabled={assigningEventId === e.id}
-                  className="font-[family-name:var(--font-vt)] text-[26px] px-2 py-1.5 bg-pixel-black border-2 border-pixel-border text-pixel-slate-light outline-none focus:border-pixel-cyan-dim min-w-[140px]"
-                >
-                  <option value="">Unassigned</option>
-                  {eventManagers.map((mgr) => (
-                    <option key={mgr.id} value={mgr.id}>{mgr.full_name || mgr.email}</option>
-                  ))}
-                </select>
+                <div className="min-w-[180px]">
+                  <Select
+                    value={e.assigned_to || ''}
+                    onChange={(ev) => handleAssign(e.id, ev.target.value || null)}
+                    disabled={assigningEventId === e.id}
+                    options={[
+                      { value: "", label: "Unassigned" },
+                      ...eventManagers.map((mgr) => ({
+                        value: mgr.id,
+                        label: mgr.full_name || mgr.email
+                      }))
+                    ]}
+                  />
+                </div>
               </div>
 
               <Button variant="secondary" onClick={() => navigate(`/admin/events/${e.id}/${e.format === 'bracket' ? 'bracket' : 'results'}`)}>
@@ -357,7 +384,7 @@ const pixelTextarea = `
               </Button>
 
               <button
-                onClick={() => handleDelete(e.id, e.name)}
+                onClick={() => handleDeleteClick(e.id, e.name)}
                 className="font-[family-name:var(--font-pixel)] text-[12px] px-3 py-2 border-2 border-pixel-red text-pixel-red bg-pixel-red/5 hover:bg-pixel-red/10 transition-colors tracking-wide
                   [box-shadow:2px_2px_0_#a01e36] active:translate-x-[2px] active:translate-y-[2px] active:[box-shadow:none]"
               >
@@ -368,6 +395,23 @@ const pixelTextarea = `
         ))}
       </div>
     )}
+      </div>
+
+      {/* Standings */}
+      <div>
+        <StandingsCard standings={standings} />
+      </div>
+    </div>
+
+    <ConfirmModal 
+      isOpen={confirmModal.isOpen}
+      title="DELETE EVENT?"
+      message={`Are you sure you want to delete "${confirmModal.eventName}"? This will permanently remove all registrations, matches, and results for this event.`}
+      onConfirm={confirmDelete}
+      onCancel={cancelDelete}
+      confirmLabel="DELETE"
+      cancelLabel="CANCEL"
+    />
   </AdminLayout>
 );
 }

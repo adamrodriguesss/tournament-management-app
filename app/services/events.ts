@@ -177,7 +177,6 @@ export async function getConfirmedRegistrationsByEvent(eventId: string) {
   return { data: data || [], error };
 }
 
-/** Calls the record_judged_results RPC to assign 1st, 2nd, and 3rd place */
 export async function recordJudgedResults(payload: {
   p_event_id: string;
   p_first_team_id: string;
@@ -186,6 +185,9 @@ export async function recordJudgedResults(payload: {
   p_recorded_by: string;
 }) {
   const { error } = await supabase.rpc('record_judged_results', payload);
+  if (!error) {
+    await supabase.from('events').update({ status: 'completed' }).eq('id', payload.p_event_id);
+  }
   return { error };
 }
 
@@ -222,7 +224,7 @@ export async function assignEventManager(eventId: string, userId: string | null)
 export async function getEventsAssignedTo(userId: string) {
   const { data, error } = await supabase
     .from("events")
-    .select("*, tournaments(name)")
+    .select("*, tournaments(id, name)")
     .eq("assigned_to", userId)
     .in("status", ["upcoming", "ongoing", "completed"])
     .order("scheduled_at", { ascending: true });

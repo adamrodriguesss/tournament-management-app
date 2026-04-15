@@ -82,8 +82,7 @@ export default function PublicTournaments({ loaderData }: { loaderData: any }) {
               key={t.id}
               onClick={() => navigate(`/tournaments/${t.id}`)}
               className={`bg-pixel-card border-[3px] border-pixel-border p-6 cursor-pointer relative
-                transition-transform duration-100 group
-                ${isEnded ? 'opacity-60' : 'hover:-translate-x-0.5 hover:-translate-y-0.5'}`}
+                transition-transform duration-100 group hover:-translate-x-0.5 hover:-translate-y-0.5`}
               style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
             >
               <div className="absolute top-0 left-0 right-0 h-[3px]"

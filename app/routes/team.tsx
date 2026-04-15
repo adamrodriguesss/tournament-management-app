@@ -5,6 +5,7 @@ import { getTeamById } from '../services/teams';
 import { getParticipantsByTeamIds, approveParticipant, rejectParticipant } from '../services/participants';
 import { getEventsByTournament, getEventRegistrationsByTeams, registerTeamForEvent, getEventRegistrationsByParticipants, registerParticipantForEvent, unregisterParticipantFromEvent } from '../services/events';
 import { Button } from '../components/ui/Button';
+import { Select } from '../components/ui/Select';
 import { AppLayout } from '../components/layout/AdminLayout';
 
 export async function clientLoader({ params }: { params: any }) {
@@ -184,20 +185,18 @@ export default function TeamView({ loaderData }: { loaderData: any }) {
 
                         {eventRegs.length === 0 ? (
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
-                            <select
-                              className="
-                                bg-pixel-black border-2 border-pixel-border px-3 py-2
-                                font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate-light
-                                outline-none focus:border-pixel-cyan-dim
-                              "
+                            <Select
+                              className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate-light"
                               value={selectedMembers[event.id] || ''}
                               onChange={(e) => setSelectedMembers({ ...selectedMembers, [event.id]: e.target.value })}
-                            >
-                              <option value="">Select member...</option>
-                              {confirmedMembers.map((m: any) => (
-                                <option key={m.id} value={m.id}>{m.users?.full_name}</option>
-                              ))}
-                            </select>
+                              options={[
+                                { value: "", label: "Select member..." },
+                                ...confirmedMembers.map((m: any) => ({
+                                  value: m.id,
+                                  label: m.users?.full_name
+                                }))
+                              ]}
+                            />
                             <Button
                               variant="primary"
                               onClick={() => handleRegisterIndividual(event.id, selectedMembers[event.id])}

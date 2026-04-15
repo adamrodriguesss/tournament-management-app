@@ -4,6 +4,11 @@ import { getSession, getRoleProfile } from '../../services/auth';
 import { getAllTournaments, createTournament } from '../../services/tournaments';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { DatePicker } from '../../components/ui/DatePicker';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Spinner } from '../../components/ui/Spinner';
 import { AdminLayout } from '../../components/layout/AdminLayout';
 import { formatToDDMMYY } from '../../lib/utils';
 
@@ -85,15 +90,6 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
     revalidator.revalidate();
   };
 
-  const statusColor = (s: string) => {
-    switch (s) {
-      case 'registration_open': return 'bg-pixel-green/10 text-pixel-green-dim border-pixel-green-dim';
-      case 'ongoing': return 'bg-pixel-cyan/10 text-pixel-cyan-dim border-pixel-cyan-dim';
-      case 'completed': return 'bg-pixel-slate/10 text-pixel-slate border-pixel-border';
-      default: return 'bg-amber-500/10 text-amber-400 border-amber-500';
-    }
-  };
-
   const pixelSelect = `
     w-full px-3 py-2.5 bg-pixel-black border-[3px] border-pixel-border
     text-pixel-slate-light font-[family-name:var(--font-vt)] text-[24px]
@@ -121,7 +117,7 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
             Create and manage tournament events.
           </p>
         </div>
-        <Button onClick={() => setShowCreate(!showCreate)}>
+        <Button variant={showCreate ? 'danger' : 'primary'} onClick={() => setShowCreate(!showCreate)}>
           {showCreate ? 'CANCEL' : '+ NEW TOURNAMENT'}
         </Button>
       </div>
@@ -158,26 +154,24 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              <Input label="End Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} min={startDate || undefined} />
+              <DatePicker label="Start Date" value={startDate} onChange={(val) => setStartDate(val)} />
+              <DatePicker label="End Date" value={endDate} onChange={(val) => setEndDate(val)} min={startDate || undefined} />
             </div>
 
-            <div className="w-full flex flex-col space-y-2">
-              <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className={pixelSelect}
-              >
-                <option value="draft">Draft</option>
-                <option value="registration_open">Registration Open</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+            <Select
+              label="Status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              options={[
+                { value: "draft", label: "Draft" },
+                { value: "registration_open", label: "Registration Open" },
+                { value: "ongoing", label: "Ongoing" },
+                { value: "completed", label: "Completed" }
+              ]}
+            />
 
             <Button fullWidth type="submit" disabled={loading}>
-              {loading ? 'CREATING...' : 'CREATE TOURNAMENT'}
+              {loading ? <div className="flex items-center justify-center gap-2"><Spinner size="sm"/> <span>CREATING...</span></div> : 'CREATE TOURNAMENT'}
             </Button>
           </form>
         </div>
@@ -185,18 +179,11 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
 
       {/* Tournaments List */}
       {tournaments.length === 0 ? (
-        <div
-          className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center"
-          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
-        >
-          <span className="text-5xl mb-4 block opacity-40">🏆</span>
-          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-2 leading-relaxed">
-            NO TOURNAMENTS YET
-          </h3>
-          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate">
-            Create your first tournament to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon="🏆"
+          title="NO TOURNAMENTS YET"
+          description="Create your first tournament to get started."
+        />
       ) : (
         <div className="space-y-4">
           {tournaments.map((t) => (
@@ -213,9 +200,7 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
                 <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
                   {t.name.toUpperCase()}
                 </h3>
-                <span className={`font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 border-2 self-start sm:self-auto tracking-wide ${statusColor(t.status)}`}>
-                  {t.status.replace(/_/g, ' ').toUpperCase()}
-                </span>
+                <Badge status={t.status} />
               </div>
 
               {t.description && (

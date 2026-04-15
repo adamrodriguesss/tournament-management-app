@@ -217,7 +217,7 @@ export default function EventRoster({ loaderData }: { loaderData: any }) {
 
       {/* Footer Actions */}
       <div className="flex justify-end gap-3 pt-6 border-t-2 border-pixel-border">
-        <Button variant="secondary" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
+        <Button variant="danger" onClick={() => navigate(`/dashboard/team/${registration.team_id}`)}>
           CANCEL
         </Button>
         <Button variant="primary" onClick={handleSave} disabled={loading}>

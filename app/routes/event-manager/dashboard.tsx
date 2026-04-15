@@ -1,7 +1,9 @@
 import { redirect, useNavigate } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
 import { getEventsAssignedTo } from '../../services/events';
+import { getTeamStandingsDetailed } from '../../services/public';
 import { Button } from '../../components/ui/Button';
+import { StandingsCard } from '../../components/ui/StandingsCard';
 import { AppLayout } from '../../components/layout/AdminLayout';
 import { formatToDDMMYYTime } from '../../lib/utils';
 
@@ -19,7 +21,20 @@ export async function clientLoader() {
 
   const { data: events } = await getEventsAssignedTo(session.user.id);
 
-  return { profile: { ...profile, id: session.user.id }, events };
+  // Fetch standings for all unique tournaments
+  const tournamentIds = Array.from(new Set(events.filter((e: any) => e.tournaments?.id).map((e: any) => e.tournaments!.id)));
+  const tournamentStandings = [];
+  for (const tid of tournamentIds) {
+    const { data: standings } = await getTeamStandingsDetailed(tid);
+    const tournamentName = events.find((e: any) => e.tournaments?.id === tid)?.tournaments?.name || 'Tournament';
+    tournamentStandings.push({
+      tournamentId: tid,
+      tournamentName,
+      standings
+    });
+  }
+
+  return { profile: { ...profile, id: session.user.id }, events, tournamentStandings };
 }
 
 type EventRow = {
@@ -30,21 +45,23 @@ type EventRow = {
   status: string;
   venue: string | null;
   scheduled_at: string | null;
-  tournaments: { name: string } | null;
+  tournaments: { id: string; name: string } | null;
 };
 
 type LoaderData = {
   profile: { role: string; full_name: string; email: string };
   events: EventRow[];
+  tournamentStandings: { tournamentId: string; tournamentName: string; standings: any[] }[];
 };
 
 export default function EventManagerDashboard({ loaderData }: { loaderData: LoaderData }) {
   const navigate = useNavigate();
-  const { profile, events } = loaderData;
+  const { profile, events, tournamentStandings } = loaderData;
 
   return (
   <AppLayout user={{ ...profile, role: 'event_manager' }} activeItem="Dashboard">
-    <div className="max-w-4xl mx-auto">
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="xl:col-span-2">
 
       <div className="mb-8 border-l-4 border-pixel-gold pl-4 py-1">
         <h2 className="font-[family-name:var(--font-pixel)] text-[11px] text-pixel-gold leading-relaxed tracking-wide">
@@ -131,6 +148,16 @@ export default function EventManagerDashboard({ loaderData }: { loaderData: Load
           ))}
         </div>
       )}
+      </div>
+
+      {/* Standings */}
+      <div>
+        {tournamentStandings.map(ts => (
+          <div key={ts.tournamentId} className="mb-6">
+            <StandingsCard title={`🏆 ${ts.tournamentName.toUpperCase()} STANDINGS`} standings={ts.standings} />
+          </div>
+        ))}
+      </div>
     </div>
   </AppLayout>
 );

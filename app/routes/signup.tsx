@@ -4,6 +4,7 @@ import { getSession, signup } from '../services/auth';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Select } from '../components/ui/Select';
 
 export async function clientLoader() {
   const session = await getSession();
@@ -80,27 +81,29 @@ export default function SignUp() {
           placeholder="John Doe"
         />
 
-        <div className="w-full flex flex-col space-y-2">
-          <label className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-gold uppercase tracking-[2px]">
-            Department
-          </label>
-          <select
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            required
-            className="
-              w-full px-3 py-2.5 bg-pixel-black border-[3px] border-pixel-border
-              text-pixel-slate-light font-[family-name:var(--font-vt)] text-[24px]
-              outline-none appearance-none cursor-pointer focus:border-pixel-cyan-dim
-              [box-shadow:inset_2px_2px_0_rgba(0,0,0,0.5)]
-            "
-          >
-            <option value="" disabled>Select your department</option>
-            {["IMBA","MBA","PHD (MANAGEMENT)","MCOM","MFS","PHD (COMMERCE)","MCA","MSC DATA SCIENCE","MSC AI","PHD (COMPUTER SCIENCE)","M.A. HISTORY","M.A. POLITICAL SCIENCE","M.A. SOCIOLOGY","MASTER OF LIBRARY AND INFORMATION SCIENCE","M.A. INTERNATIONAL STUDIES","M.A. WOMEN'S STUDIES","M.A. PORTUGUESE","M.A. HINDI","M.A. KONKANI","M.A. MARATHI","M.A. ENGLISH","M.A. FRENCH","M.A. PHILOSOPHY","M.A. PUBLIC ADM.","M.A. ECONOMICS","B.A. COURSES","MSW","LLM","PHD (ARTS)","M.SC. ANALYTICAL SCIENCE","M.SC. BIOCHEMISTRY","M.SC. INORGANIC CHEMISTRY","M.SC. ORGANIC CHEMISTRY","M.SC. PHYSICAL CHEMISTRY","M.SC. ELECTRONICS","M.SC. MATHEMATICS","M.SC. PHYSICS","PHD (ABOVE SUBJECTS)","M.SC. MARINE BIOTECHNOLOGY","M.SC. GENERAL BIOTECHNOLOGY","M.SC. ZOOLOGY","M.SC. MICROBIOLOGY","M.SC. BOTANY","M.SC. ENVIRONMENTAL SCIENCE","M.SC. APPLIED GEOLOGY","M.SC. MARINE MICROBIOLOGY","M.SC. MARINE SCIENCES"].map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Department"
+          value={department}
+          onChange={(e) => setDepartment(e.target.value)}
+          required
+          options={[
+            { value: "", label: "Select your department" },
+            ...[
+              "IMBA","MBA","PHD (MANAGEMENT)","MCOM","MFS","PHD (COMMERCE)","MCA",
+              "MSC DATA SCIENCE","MSC AI","PHD (COMPUTER SCIENCE)","M.A. HISTORY",
+              "M.A. POLITICAL SCIENCE","M.A. SOCIOLOGY","MASTER OF LIBRARY AND INFORMATION SCIENCE",
+              "M.A. INTERNATIONAL STUDIES","M.A. WOMEN'S STUDIES","M.A. PORTUGUESE",
+              "M.A. HINDI","M.A. KONKANI","M.A. MARATHI","M.A. ENGLISH","M.A. FRENCH",
+              "M.A. PHILOSOPHY","M.A. PUBLIC ADM.","M.A. ECONOMICS","B.A. COURSES",
+              "MSW","LLM","PHD (ARTS)","M.SC. ANALYTICAL SCIENCE","M.SC. BIOCHEMISTRY",
+              "M.SC. INORGANIC CHEMISTRY","M.SC. ORGANIC CHEMISTRY","M.SC. PHYSICAL CHEMISTRY",
+              "M.SC. ELECTRONICS","M.SC. MATHEMATICS","M.SC. PHYSICS","PHD (ABOVE SUBJECTS)",
+              "M.SC. MARINE BIOTECHNOLOGY","M.SC. GENERAL BIOTECHNOLOGY","M.SC. ZOOLOGY",
+              "M.SC. MICROBIOLOGY","M.SC. BOTANY","M.SC. ENVIRONMENTAL SCIENCE",
+              "M.SC. APPLIED GEOLOGY","M.SC. MARINE MICROBIOLOGY","M.SC. MARINE SCIENCES"
+            ].map(dept => ({ value: dept, label: dept }))
+          ]}
+        />
 
         <Input
           label="Email Address"

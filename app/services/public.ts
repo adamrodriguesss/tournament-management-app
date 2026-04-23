@@ -128,7 +128,7 @@ export async function getTeamStandingsDetailed(tournamentId: string) {
 export async function getPublicMatches(eventId: string) {
   const { data, error } = await supabase
     .from("matches")
-    .select("*, team_a:team_a_id(id, name), team_b:team_b_id(id, name), winner:winner_id(id, name)")
+    .select("*, team_a:team_a_id(id, name), team_b:team_b_id(id, name), winner:winner_id(id, name), participant_a:participants!participant_a_id(user:users!user_id(full_name)), participant_b:participants!participant_b_id(user:users!user_id(full_name)), winner_participant:participants!winner_participant_id(user:users!user_id(full_name))")
     .eq("event_id", eventId)
     .order("round_number", { ascending: true })
     .order("id", { ascending: true });
@@ -139,7 +139,7 @@ export async function getPublicMatches(eventId: string) {
 export async function getPublicEventResults(eventId: string) {
   const { data, error } = await supabase
     .from("event_results")
-    .select("*, team:team_id(id, name, department)")
+    .select("*, team:team_id(id, name, department), participant:participants!participant_id(user:users!user_id(full_name))")
     .eq("event_id", eventId)
     .order("position", { ascending: true });
   return { data: data || [], error };

@@ -107,38 +107,38 @@ const MatchNode: React.FC<MatchNodeProps> = ({ match, allMatches, onMatchClick, 
           `}
           style={{ boxShadow: '2px 2px 0 var(--color-pixel-border)' }}
         >
-          {/* Team A */}
+          {/* Team/Participant A */}
           <div className={`p-3 flex justify-between items-center border-b-[3px] border-pixel-border
-            ${match.winner_id && match.winner_id === match.team_a_id
+            ${(match.winner_id && match.winner_id === match.team_a_id) || (match.winner_participant_id && match.winner_participant_id === match.participant_a_id)
               ? 'bg-pixel-gold/10 text-pixel-gold'
               : 'text-pixel-slate-light'}
           `}>
             <span className="font-[family-name:var(--font-vt)] text-[22px] truncate pr-2">
-              {match.team_a?.name || <span className="text-pixel-border italic">TBD</span>}
+              {match.team_a?.name || match.participant_a?.user?.full_name?.toUpperCase() || <span className="text-pixel-border italic">TBD</span>}
             </span>
             <span className={`font-[family-name:var(--font-pixel)] text-[12px] 
-              ${match.winner_id === match.team_a_id ? 'text-pixel-gold' : 'text-pixel-cyan'}`}>
+              ${(match.winner_id === match.team_a_id) || (match.winner_participant_id === match.participant_a_id) ? 'text-pixel-gold' : 'text-pixel-cyan'}`}>
               {match.score_a != null ? match.score_a : '-'}
             </span>
           </div>
 
-          {/* Team B */}
+          {/* Team/Participant B */}
           <div className={`p-3 flex justify-between items-center
-            ${match.winner_id && match.winner_id === match.team_b_id
+            ${(match.winner_id && match.winner_id === match.team_b_id) || (match.winner_participant_id && match.winner_participant_id === match.participant_b_id)
               ? 'bg-pixel-gold/10 text-pixel-gold'
               : 'text-pixel-slate-light'}
           `}>
             <span className="font-[family-name:var(--font-vt)] text-[22px] truncate pr-2">
-              {match.team_b?.name || <span className="text-pixel-border italic">TBD</span>}
+              {match.team_b?.name || match.participant_b?.user?.full_name?.toUpperCase() || <span className="text-pixel-border italic">TBD</span>}
             </span>
             <span className={`font-[family-name:var(--font-pixel)] text-[12px]
-              ${match.winner_id === match.team_b_id ? 'text-pixel-gold' : 'text-pixel-cyan'}`}>
+              ${(match.winner_id === match.team_b_id) || (match.winner_participant_id === match.participant_b_id) ? 'text-pixel-gold' : 'text-pixel-cyan'}`}>
               {match.score_b != null ? match.score_b : '-'}
             </span>
           </div>
 
           {/* Auto Bye Indicator */}
-          {match.status === 'completed' && (!match.team_a_id || !match.team_b_id) && (
+          {match.status === 'completed' && (!(match.team_a_id || match.participant_a_id) || !(match.team_b_id || match.participant_b_id)) && (
             <div className="p-1.5 text-center bg-pixel-black border-t-[3px] border-pixel-border">
               <span className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate tracking-[2px]">
                 AUTO BYE

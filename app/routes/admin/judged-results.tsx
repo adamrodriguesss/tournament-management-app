@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { AdminLayout } from '../../components/layout/AdminLayout';
+import { EventInfoCard } from '../../components/ui/EventInfoCard';
 import type { Route } from './+types/judged-results';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -248,40 +249,11 @@ return (
       </div>
 
       {/* Sidebar Info */}
-      <div>
-        <div
-          className="bg-pixel-card border-[3px] border-pixel-border p-6 relative"
-          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-pixel-cyan-dim" />
-          <h3 className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light mb-5 tracking-wide leading-relaxed">
-            EVENT INFO
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Status</p>
-              <span className="font-[family-name:var(--font-pixel)] text-[12px] px-2 py-1 bg-pixel-green/10 border border-pixel-green-dim text-pixel-green-dim tracking-wide capitalize">
-                {event.status.toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Format & Type</p>
-              <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate-light capitalize">
-                {event.format} · {event.type}
-              </p>
-            </div>
-            <div>
-              <p className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate uppercase tracking-[2px] mb-1">Registered Teams</p>
-              <p className="font-[family-name:var(--font-pixel)] text-[24px] text-pixel-cyan">{registrations.length}</p>
-            </div>
-          </div>
-          <div className="mt-6 pt-5 border-t-2 border-pixel-border">
-            <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate leading-relaxed">
-              Judged event results allocate points immediately upon saving. You can correct mistakes anytime by changing selections and saving again.
-            </p>
-          </div>
-        </div>
-      </div>
+      <EventInfoCard 
+        event={event} 
+        registrations={registrations} 
+        bottomDescription="Judged event results allocate points immediately upon saving. You can correct mistakes anytime by changing selections and saving again."
+      />
     </div>
   </AdminLayout>
 );

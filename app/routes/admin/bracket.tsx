@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
-import { getMatchesByEvent, generateBracket, recordMatchScore } from '../../services/bracket';
+import { getMatchesByEvent, generateBracket, regenerateBracket, recordMatchScore, getEventRegistrations } from '../../services/bracket';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Bracket } from '../../components/ui/Bracket';
 import { AdminLayout } from '../../components/layout/AdminLayout';
+import { EventInfoCard } from '../../components/ui/EventInfoCard';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import type { Route } from './+types/bracket';
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -25,31 +27,39 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
     return redirect("/event-manager");
   }
 
-  // Fetch matches
-  const { data: matches } = await getMatchesByEvent(eventId);
+  // Fetch matches and registrations
+  const [matchesRes, regsRes] = await Promise.all([
+    getMatchesByEvent(eventId),
+    getEventRegistrations(eventId)
+  ]);
 
   return {
     user: { ...user, id: session.user.id },
     event,
-    matches
+    matches: matchesRes.data,
+    registrations: regsRes.data
   };
 }
 
 export default function AdminBracket({ loaderData }: { loaderData: any }) {
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const { user, event, matches } = loaderData;
+  const { user, event, matches, registrations } = loaderData;
 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Score Modal State
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
-  const [scoreA, setScoreA] = useState<number | ''>('');
-  const [scoreB, setScoreB] = useState<number | ''>('');
+  const [scoreA, setScoreA] = useState<number | ''>(0);
+  const [scoreB, setScoreB] = useState<number | ''>(0);
   const [submittingScore, setSubmittingScore] = useState(false);
 
+  // Confirm Modal State
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+
   const rounds = Array.from(new Set(matches.map((m: any) => m.round_number))).sort();
+  const hasScores = matches.some((m: any) => m.score_a !== null || m.score_b !== null);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -63,13 +73,28 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
     setGenerating(false);
   };
 
+  const handleRegenerate = async () => {
+    setGenerating(true);
+    setError(null);
+    const { error: regenErr } = await regenerateBracket(event.id, user.id);
+    if (regenErr) {
+      setError(regenErr.message);
+    } else {
+      setShowRegenerateConfirm(false);
+      revalidator.revalidate();
+    }
+    setGenerating(false);
+  };
+
   const openScoreModal = (match: any) => {
-    // Only allow scoring if both teams exist
-    if (!match.team_a_id || !match.team_b_id) return;
+    // Only allow scoring if both entrants exist
+    const hasA = match.team_a_id || match.participant_a_id;
+    const hasB = match.team_b_id || match.participant_b_id;
+    if (!hasA || !hasB) return;
 
     setSelectedMatch(match);
-    setScoreA(match.score_a !== null ? match.score_a : '');
-    setScoreB(match.score_b !== null ? match.score_b : '');
+    setScoreA(match.score_a !== null ? match.score_a : 0);
+    setScoreB(match.score_b !== null ? match.score_b : 0);
   };
 
   const handleScoreSubmit = async (e: React.FormEvent) => {
@@ -118,11 +143,15 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
             {event.tournaments?.name} — Single Elimination
           </p>
         </div>
-        {matches.length === 0 && (
+        {matches.length === 0 ? (
           <Button variant="primary" onClick={handleGenerate} disabled={generating}>
             {generating ? 'GENERATING...' : 'GENERATE BRACKET'}
           </Button>
-        )}
+        ) : !hasScores ? (
+          <Button variant="danger" onClick={() => setShowRegenerateConfirm(true)} disabled={generating}>
+            {generating ? 'REGENERATING...' : 'REGENERATE BRACKET'}
+          </Button>
+        ) : null}
       </div>
 
       {error && (
@@ -131,24 +160,34 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
         </div>
       )}
 
-      {matches.length === 0 ? (
-        <div className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
-          <span className="text-5xl mb-4 block opacity-30">🏆</span>
-          <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light mb-3 leading-relaxed">
-            BRACKET NOT GENERATED
-          </h3>
-          <p className="font-[family-name:var(--font-vt)] text-[22px] text-pixel-slate max-w-md mx-auto">
-            Teams must be fully registered and confirmed before generating the bracket. Once generated, the setup is permanent!
-          </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          {matches.length === 0 ? (
+            <div className="bg-pixel-card border-[3px] border-pixel-border p-12 text-center" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+              <span className="text-6xl mb-6 block opacity-30">🏆</span>
+              <h3 className="font-[family-name:var(--font-pixel)] text-[14px] text-pixel-slate-light mb-4 leading-relaxed">
+                BRACKET NOT GENERATED
+              </h3>
+              <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate max-w-md mx-auto leading-relaxed">
+                Teams must be fully registered and confirmed before generating the bracket. Once generated, the match setup is finalized.
+              </p>
+            </div>
+          ) : (
+            <div
+              className="bg-pixel-card border-[3px] border-pixel-border p-6 overflow-hidden"
+              style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
+            >
+              <Bracket matches={matches} onMatchClick={openScoreModal} />
+            </div>
+          )}
         </div>
-      ) : (
-        <div
-          className="bg-pixel-card border-[3px] border-pixel-border p-6 overflow-hidden"
-          style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
-        >
-          <Bracket matches={matches} onMatchClick={openScoreModal} />
-        </div>
-      )}
+
+        <EventInfoCard 
+          event={event} 
+          registrations={registrations} 
+          bottomDescription="Single elimination bracket. Winners advance to the next round until a final champion is crowned."
+        />
+      </div>
 
       {/* Score Modal */}
       {selectedMatch && (
@@ -170,8 +209,8 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
               )}
               <div className="space-y-4 mb-6">
                 {[
-                  { label: selectedMatch.team_a?.name, value: scoreA, set: setScoreA },
-                  { label: selectedMatch.team_b?.name, value: scoreB, set: setScoreB },
+                  { label: selectedMatch.team_a?.name || selectedMatch.participant_a?.user?.full_name?.toUpperCase(), value: scoreA, set: setScoreA },
+                  { label: selectedMatch.team_b?.name || selectedMatch.participant_b?.user?.full_name?.toUpperCase(), value: scoreB, set: setScoreB },
                 ].map(({ label, value, set }) => (
                   <div key={label} className="flex items-center justify-between gap-4">
                     <label className="font-[family-name:var(--font-pixel)] text-[10px] text-pixel-slate-light truncate w-32 leading-relaxed">
@@ -200,6 +239,17 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
           </div>
         </div>
       )}
+
+      {/* Confirm Regenerate Modal */}
+      <ConfirmModal
+        isOpen={showRegenerateConfirm}
+        title="REGENERATE BRACKET"
+        message="Are you sure you want to regenerate the bracket? This will scramble the current matchups."
+        confirmLabel={generating ? 'REGENERATING...' : 'YES, REGENERATE'}
+        cancelLabel="CANCEL"
+        onConfirm={handleRegenerate}
+        onCancel={() => setShowRegenerateConfirm(false)}
+      />
     </AdminLayout>
   );
 }

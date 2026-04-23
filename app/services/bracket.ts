@@ -4,10 +4,28 @@ import { supabase } from '../lib/supabase';
 export async function getMatchesByEvent(eventId: string) {
   const { data, error } = await supabase
     .from('matches')
-    .select('*, team_a:teams!team_a_id(name), team_b:teams!team_b_id(name), winner:teams!winner_id(name)')
+    .select('*, team_a:teams!team_a_id(name), team_b:teams!team_b_id(name), winner:teams!winner_id(name), participant_a:participants!participant_a_id(user:users!user_id(full_name)), participant_b:participants!participant_b_id(user:users!user_id(full_name)), winner_participant:participants!winner_participant_id(user:users!user_id(full_name))')
     .eq('event_id', eventId)
     .order('round_number', { ascending: true })
     .order('id', { ascending: true });
+  return { data: data || [], error };
+}
+
+/** Fetch all confirmed registrations for an event */
+export async function getEventRegistrations(eventId: string) {
+  const { data, error } = await supabase
+    .from('event_registrations')
+    .select(`
+      id,
+      team:teams!team_id(id, name, department),
+      participant:participants!participant_id(
+        id, 
+        user:users!user_id(full_name),
+        team:teams!team_id(name, department)
+      )
+    `)
+    .eq('event_id', eventId)
+    .eq('status', 'confirmed');
   return { data: data || [], error };
 }
 
@@ -16,7 +34,7 @@ export async function generateBracket(eventId: string, adminId: string) {
   // 1. Fetch confimed registrations
   const { data: regs, error: regError } = await supabase
     .from('event_registrations')
-    .select('team_id')
+    .select('team_id, participant_id')
     .eq('event_id', eventId)
     .eq('status', 'confirmed');
 
@@ -26,6 +44,8 @@ export async function generateBracket(eventId: string, adminId: string) {
   // 2. Fetch event details
   const { data: event } = await supabase.from('events').select('*').eq('id', eventId).single();
   if (!event || event.format !== 'bracket') return { error: new Error('Event must be a bracket format.') };
+  
+  const isIndividual = event.type === 'individual';
 
   const p = Math.pow(2, Math.ceil(Math.log2(regs.length)));
   const totalMatches = p - 1;
@@ -37,9 +57,12 @@ export async function generateBracket(eventId: string, adminId: string) {
     round_number: 1,
     team_a_id: null as string | null,
     team_b_id: null as string | null,
+    participant_a_id: null as string | null,
+    participant_b_id: null as string | null,
     score_a: null as number | null,
     score_b: null as number | null,
     winner_id: null as string | null,
+    winner_participant_id: null as string | null,
     status: 'scheduled',
     next_match_id: null as string | null,
     entered_by: adminId,
@@ -66,38 +89,55 @@ export async function generateBracket(eventId: string, adminId: string) {
   }
 
   // 4. Seed teams randomly
-  const shuffledTeams = regs.map(r => r.team_id).sort(() => 0.5 - Math.random());
+  const shuffledTeams = regs.map(r => isIndividual ? r.participant_id : r.team_id).sort(() => 0.5 - Math.random());
   const slots = [...shuffledTeams];
   while (slots.length < p) slots.push(null); // pad with byes (nulls)
 
   for (let i = 0; i < p / 2; i++) {
-    const teamA = slots[i * 2];
-    const teamB = slots[i * 2 + 1];
+    const entrantA = slots[i * 2];
+    const entrantB = slots[i * 2 + 1];
     const match = matches[i];
 
-    match.team_a_id = teamA;
-    match.team_b_id = teamB;
+    if (isIndividual) {
+      match.participant_a_id = entrantA;
+      match.participant_b_id = entrantB;
+    } else {
+      match.team_a_id = entrantA;
+      match.team_b_id = entrantB;
+    }
 
     // Default status handling
-    if (teamA && !teamB) {
-      match.winner_id = teamA;
+    if (entrantA && !entrantB) {
+      if (isIndividual) match.winner_participant_id = entrantA;
+      else match.winner_id = entrantA;
       match.status = 'completed';
 
       // Auto-advance
       const nextMatch = matches.find(m => m.id === match.next_match_id);
       if (nextMatch) {
-        if (i % 2 === 0) nextMatch.team_a_id = teamA;
-        else nextMatch.team_b_id = teamA;
+        if (i % 2 === 0) {
+          if (isIndividual) nextMatch.participant_a_id = entrantA;
+          else nextMatch.team_a_id = entrantA;
+        } else {
+          if (isIndividual) nextMatch.participant_b_id = entrantA;
+          else nextMatch.team_b_id = entrantA;
+        }
       }
-    } else if (!teamA && teamB) {
-      match.winner_id = teamB;
+    } else if (!entrantA && entrantB) {
+      if (isIndividual) match.winner_participant_id = entrantB;
+      else match.winner_id = entrantB;
       match.status = 'completed';
 
       // Auto-advance
       const nextMatch = matches.find(m => m.id === match.next_match_id);
       if (nextMatch) {
-        if (i % 2 === 0) nextMatch.team_a_id = teamB;
-        else nextMatch.team_b_id = teamB;
+        if (i % 2 === 0) {
+          if (isIndividual) nextMatch.participant_a_id = entrantB;
+          else nextMatch.team_a_id = entrantB;
+        } else {
+          if (isIndividual) nextMatch.participant_b_id = entrantB;
+          else nextMatch.team_b_id = entrantB;
+        }
       }
     }
   }
@@ -107,8 +147,21 @@ export async function generateBracket(eventId: string, adminId: string) {
   return { error: insertError };
 }
 
-async function eliminateDownstreamMatchWinner(matchIdToStartFrom: string | null, oldWinnerIdToErase: string | null) {
-  if (!matchIdToStartFrom || !oldWinnerIdToErase) return;
+/** Regenerates the bracket if no matches have been played. */
+export async function regenerateBracket(eventId: string, adminId: string) {
+  const { data: matches } = await supabase.from('matches').select('*').eq('event_id', eventId);
+  if (matches?.some(m => m.score_a !== null || m.score_b !== null)) {
+    return { error: new Error('Cannot regenerate bracket after matches have been played.') };
+  }
+
+  const { error: deleteError } = await supabase.from('matches').delete().eq('event_id', eventId);
+  if (deleteError) return { error: deleteError };
+
+  return generateBracket(eventId, adminId);
+}
+
+async function eliminateDownstreamMatchWinner(matchIdToStartFrom: string | null, oldWinnerIdToErase: string | null, oldWinnerParticipantIdToErase: string | null) {
+  if (!matchIdToStartFrom || (!oldWinnerIdToErase && !oldWinnerParticipantIdToErase)) return;
   
   let currId: string | null = matchIdToStartFrom;
   while (currId) {
@@ -118,21 +171,31 @@ async function eliminateDownstreamMatchWinner(matchIdToStartFrom: string | null,
     
     let updateData: any = {};
     let fieldToClear = null;
-    if (currMatch.team_a_id === oldWinnerIdToErase) fieldToClear = 'team_a_id';
-    else if (currMatch.team_b_id === oldWinnerIdToErase) fieldToClear = 'team_b_id';
+    let fieldToClearParticipant = null;
+    if (oldWinnerIdToErase) {
+      if (currMatch.team_a_id === oldWinnerIdToErase) fieldToClear = 'team_a_id';
+      else if (currMatch.team_b_id === oldWinnerIdToErase) fieldToClear = 'team_b_id';
+    }
+    if (oldWinnerParticipantIdToErase) {
+      if (currMatch.participant_a_id === oldWinnerParticipantIdToErase) fieldToClearParticipant = 'participant_a_id';
+      else if (currMatch.participant_b_id === oldWinnerParticipantIdToErase) fieldToClearParticipant = 'participant_b_id';
+    }
 
-    if (fieldToClear) {
-      updateData[fieldToClear] = null;
+    if (fieldToClear || fieldToClearParticipant) {
+      if (fieldToClear) updateData[fieldToClear] = null;
+      if (fieldToClearParticipant) updateData[fieldToClearParticipant] = null;
       if (currMatch.status === 'completed') {
         updateData.status = 'scheduled';
         updateData.score_a = null;
         updateData.score_b = null;
         updateData.winner_id = null;
+        updateData.winner_participant_id = null;
         
         await supabase.from('matches').update(updateData).eq('id', currId);
         // Since we are resetting this match, we must also tell the loop to erase ITS winner later downstream
         currId = currMatch.next_match_id; 
         oldWinnerIdToErase = currMatch.winner_id; 
+        oldWinnerParticipantIdToErase = currMatch.winner_participant_id;
       } else {
         await supabase.from('matches').update(updateData).eq('id', currId);
         break; // Match wasn't played yet, no need to recurse deeper
@@ -153,16 +216,20 @@ export async function recordMatchScore(
   // 1. Get the match and event
   const { data: match, error: fetchErr } = await supabase
     .from('matches')
-    .select('*, events(points_first, points_second)')
+    .select('*, events(type, status, points_first, points_second)')
     .eq('id', matchId)
     .single();
 
   if (fetchErr || !match) return { error: fetchErr || new Error('Match not found') };
   if (scoreA === scoreB) return { error: new Error('Matches cannot end in a draw.') };
 
+  const isIndividual = match.events.type === 'individual';
   const oldWinnerId = match.winner_id;
-  const newWinnerId = scoreA > scoreB ? match.team_a_id : match.team_b_id;
-  const newLoserId = scoreA > scoreB ? match.team_b_id : match.team_a_id;
+  const oldWinnerParticipantId = match.winner_participant_id;
+  const newWinnerId = isIndividual ? null : (scoreA > scoreB ? match.team_a_id : match.team_b_id);
+  const newLoserId = isIndividual ? null : (scoreA > scoreB ? match.team_b_id : match.team_a_id);
+  const newWinnerParticipantId = isIndividual ? (scoreA > scoreB ? match.participant_a_id : match.participant_b_id) : null;
+  const newLoserParticipantId = isIndividual ? (scoreA > scoreB ? match.participant_b_id : match.participant_a_id) : null;
 
   // 2. Update the current match
   const { error: updateErr } = await supabase
@@ -171,6 +238,7 @@ export async function recordMatchScore(
       score_a: scoreA,
       score_b: scoreB,
       winner_id: newWinnerId,
+      winner_participant_id: newWinnerParticipantId,
       status: 'completed',
       entered_by: adminId,
       updated_at: new Date().toISOString()
@@ -179,11 +247,18 @@ export async function recordMatchScore(
 
   if (updateErr) return { error: updateErr };
 
+  // 2b. Start the event if it's the first match (atomic update)
+  await supabase
+    .from('events')
+    .update({ status: 'ongoing' })
+    .eq('id', match.event_id)
+    .eq('status', 'upcoming');
+
   // 3. Advance to next match if one exists
   if (match.next_match_id) {
     const { data: nextMatch } = await supabase
       .from('matches')
-      .select('id, team_a_id, team_b_id, status, winner_id, next_match_id')
+      .select('id, team_a_id, team_b_id, participant_a_id, participant_b_id, status, winner_id, winner_participant_id, next_match_id')
       .eq('id', match.next_match_id)
       .single();
 
@@ -191,24 +266,38 @@ export async function recordMatchScore(
       const updateData: any = {};
       let weAreErasingOldWinner = false;
 
-      if (oldWinnerId && oldWinnerId !== newWinnerId) {
-         // It's an edit, and winner changed
-         if (nextMatch.team_a_id === oldWinnerId) {
-           updateData.team_a_id = newWinnerId;
-           weAreErasingOldWinner = true;
-         } else if (nextMatch.team_b_id === oldWinnerId) {
-           updateData.team_b_id = newWinnerId;
-           weAreErasingOldWinner = true;
-         } else {
+      if (!isIndividual) {
+        if (oldWinnerId && oldWinnerId !== newWinnerId) {
+           if (nextMatch.team_a_id === oldWinnerId) {
+             updateData.team_a_id = newWinnerId;
+             weAreErasingOldWinner = true;
+           } else if (nextMatch.team_b_id === oldWinnerId) {
+             updateData.team_b_id = newWinnerId;
+             weAreErasingOldWinner = true;
+           } else {
+             if (!nextMatch.team_a_id) updateData.team_a_id = newWinnerId;
+             else updateData.team_b_id = newWinnerId;
+           }
+        } else if (oldWinnerId !== newWinnerId) {
            if (!nextMatch.team_a_id) updateData.team_a_id = newWinnerId;
            else updateData.team_b_id = newWinnerId;
-         }
+        }
       } else {
-         // Either first time recording, or old winner didn't change
-         if (oldWinnerId !== newWinnerId) {
-            if (!nextMatch.team_a_id) updateData.team_a_id = newWinnerId;
-            else updateData.team_b_id = newWinnerId;
-         }
+        if (oldWinnerParticipantId && oldWinnerParticipantId !== newWinnerParticipantId) {
+           if (nextMatch.participant_a_id === oldWinnerParticipantId) {
+             updateData.participant_a_id = newWinnerParticipantId;
+             weAreErasingOldWinner = true;
+           } else if (nextMatch.participant_b_id === oldWinnerParticipantId) {
+             updateData.participant_b_id = newWinnerParticipantId;
+             weAreErasingOldWinner = true;
+           } else {
+             if (!nextMatch.participant_a_id) updateData.participant_a_id = newWinnerParticipantId;
+             else updateData.participant_b_id = newWinnerParticipantId;
+           }
+        } else if (oldWinnerParticipantId !== newWinnerParticipantId) {
+           if (!nextMatch.participant_a_id) updateData.participant_a_id = newWinnerParticipantId;
+           else updateData.participant_b_id = newWinnerParticipantId;
+        }
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -217,10 +306,11 @@ export async function recordMatchScore(
            updateData.score_a = null;
            updateData.score_b = null;
            updateData.winner_id = null;
+           updateData.winner_participant_id = null;
            await supabase.from('matches').update(updateData).eq('id', nextMatch.id);
            
            // Cascade erase!
-           await eliminateDownstreamMatchWinner(nextMatch.next_match_id, nextMatch.winner_id);
+           await eliminateDownstreamMatchWinner(nextMatch.next_match_id, nextMatch.winner_id, nextMatch.winner_participant_id);
         } else {
            await supabase.from('matches').update(updateData).eq('id', nextMatch.id);
         }
@@ -231,15 +321,17 @@ export async function recordMatchScore(
     const event = match.events;
 
     // Delete any previous final awards for this event via match editing
-    if (oldWinnerId && oldWinnerId !== newWinnerId) {
-      // Just clear out all results for the event to recreate them freshly
+    if (!isIndividual && oldWinnerId && oldWinnerId !== newWinnerId) {
+      await supabase.from('event_results').delete().eq('event_id', match.event_id).in('position', [1, 2]);
+    } else if (isIndividual && oldWinnerParticipantId && oldWinnerParticipantId !== newWinnerParticipantId) {
       await supabase.from('event_results').delete().eq('event_id', match.event_id).in('position', [1, 2]);
     }
 
     // 1st Place
     await supabase.from('event_results').upsert({
       event_id: match.event_id,
-      team_id: newWinnerId,
+      team_id: isIndividual ? null : newWinnerId,
+      participant_id: isIndividual ? newWinnerParticipantId : null,
       position: 1,
       points_awarded: event.points_first,
       recorded_by: adminId
@@ -248,7 +340,8 @@ export async function recordMatchScore(
     // 2nd Place
     await supabase.from('event_results').upsert({
       event_id: match.event_id,
-      team_id: newLoserId,
+      team_id: isIndividual ? null : newLoserId,
+      participant_id: isIndividual ? newLoserParticipantId : null,
       position: 2,
       points_awarded: event.points_second,
       recorded_by: adminId

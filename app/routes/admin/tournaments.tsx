@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { redirect, useNavigate, useRevalidator } from 'react-router';
 import { getSession, getRoleProfile } from '../../services/auth';
-import { getAllTournaments, createTournament } from '../../services/tournaments';
+import { getAllTournaments, createTournament, deleteTournament } from '../../services/tournaments';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -10,6 +10,7 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Spinner } from '../../components/ui/Spinner';
 import { AdminLayout } from '../../components/layout/AdminLayout';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { formatToDDMMYY } from '../../lib/utils';
 
 export async function clientLoader() {
@@ -53,6 +54,7 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
   const [status, setStatus] = useState('registration_open');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +90,14 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
     setShowCreate(false);
     setLoading(false);
     revalidator.revalidate();
+  };
+
+  const handleDelete = async () => {
+    if (deleteId) {
+      await deleteTournament(deleteId);
+      setDeleteId(null);
+      revalidator.revalidate();
+    }
   };
 
   const pixelSelect = `
@@ -196,10 +206,12 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
                 style={{ background: 'linear-gradient(90deg, var(--color-pixel-gold), var(--color-pixel-purple))' }}
               />
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed">
-                  {t.name.toUpperCase()}
-                </h3>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light leading-relaxed truncate">
+                    {t.name.toUpperCase()}
+                  </h3>
+                </div>
                 <Badge status={t.status} />
               </div>
 
@@ -219,11 +231,23 @@ export default function AdminTournaments({ loaderData }: { loaderData: LoaderDat
                 <Button variant="secondary" onClick={() => navigate(`/admin/tournaments/${t.id}/teams`)}>
                   MANAGE TEAMS
                 </Button>
+                <Button variant="danger" onClick={() => setDeleteId(t.id)}>
+                  DELETE
+                </Button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onCancel={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="DELETE TOURNAMENT?"
+        message="This will permanently delete this tournament and ALL associated events, teams, and matches. This action cannot be undone. Are you sure?"
+        confirmLabel="YES, DELETE IT"
+      />
     </AdminLayout>
   );
 }

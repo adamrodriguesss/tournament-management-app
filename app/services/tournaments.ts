@@ -66,3 +66,9 @@ export async function autoCompleteExpired() {
     .lt("scheduled_at", new Date().toISOString())
     .neq("status", "completed");
 }
+
+/** Deletes a tournament entirely. */
+export async function deleteTournament(id: string) {
+  const { error } = await supabase.from("tournaments").delete().eq("id", id);
+  return { error };
+}

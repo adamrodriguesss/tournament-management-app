@@ -163,8 +163,10 @@ export default function EventDetail({ loaderData }: { loaderData: any }) {
                     🏆 BRACKET
                   </h3>
                 </div>
-                <div className="bg-pixel-card border-[3px] border-pixel-border overflow-hidden" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
-                  <Bracket matches={matches} isReadOnly={true} />
+                <div className="bg-pixel-card border-[3px] border-pixel-border overflow-x-auto" style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}>
+                  <div className="min-w-max p-4">
+                    <Bracket matches={matches} isReadOnly={true} />
+                  </div>
                 </div>
               </>
             ) : registrations.length > 0 ? (

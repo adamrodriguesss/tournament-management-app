@@ -51,7 +51,7 @@ export function EventInfoCard({ event, registrations, bottomDescription }: Event
                       {event.type === 'individual' && participantName ? (
                         <>
                           {participantName.toUpperCase()}
-                          <span className="block text-[9px] text-pixel-slate mt-0.5 opacity-70">
+                          <span className="block text-[9px] text-pixel-slate mt-0.5 opacity-70 truncate">
                             FROM {teamName?.toUpperCase()}
                           </span>
                         </>

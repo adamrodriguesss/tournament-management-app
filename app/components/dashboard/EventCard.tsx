@@ -33,7 +33,7 @@ export function EventCard({ event, registration, type }: { event: any; registrat
             {event.name.toUpperCase()}
           </h4>
           {event.tournaments?.name && (
-            <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-0.5">
+            <p className="font-[family-name:var(--font-vt)] text-[24px] text-pixel-slate mt-0.5 truncate" title={event.tournaments.name}>
               {event.tournaments.name}
             </p>
           )}

@@ -124,8 +124,8 @@ const formatBadge = (f: string) => {
                   >
                     <div className={`absolute top-0 left-0 right-0 h-[2px] opacity-50 ${isEnded ? 'bg-slate-600' : 'bg-pixel-purple'}`} />
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <div className="flex flex-col gap-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
                         {isEnded && (
                           <span className="font-[family-name:var(--font-pixel)] text-[8px] text-slate-500 tracking-wider">
                             ✓ CONCLUDED
@@ -133,7 +133,7 @@ const formatBadge = (f: string) => {
                         )}
                         <h4 className={`font-[family-name:var(--font-pixel)] text-[12px]
                           ${isEnded ? 'text-pixel-slate' : 'text-pixel-slate-light group-hover:text-pixel-gold transition-colors'}
-                          leading-relaxed tracking-wide`}>
+                          leading-relaxed tracking-wide truncate`}>
                           {event.name.toUpperCase()}
                         </h4>
                       </div>

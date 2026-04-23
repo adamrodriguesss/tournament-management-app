@@ -174,10 +174,12 @@ export default function AdminBracket({ loaderData }: { loaderData: any }) {
             </div>
           ) : (
             <div
-              className="bg-pixel-card border-[3px] border-pixel-border p-6 overflow-hidden"
+              className="bg-pixel-card border-[3px] border-pixel-border overflow-x-auto"
               style={{ boxShadow: '3px 3px 0 var(--color-pixel-border)' }}
             >
-              <Bracket matches={matches} onMatchClick={openScoreModal} />
+              <div className="min-w-max p-6">
+                <Bracket matches={matches} onMatchClick={openScoreModal} />
+              </div>
             </div>
           )}
         </div>

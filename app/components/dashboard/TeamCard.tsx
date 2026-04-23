@@ -27,12 +27,12 @@ export function TeamCard({ participation, team, tournament, pendingMembers, prof
 
     {/* Header */}
     <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-      <div>
-        <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light truncate max-w-[200px] xl:max-w-[250px] leading-relaxed"
+      <div className="flex-1 min-w-0">
+        <h3 className="font-[family-name:var(--font-pixel)] text-[12px] text-pixel-slate-light truncate leading-relaxed"
           title={team.name}>
           {team.name.toUpperCase()}
         </h3>
-        <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate truncate max-w-[200px] xl:max-w-[250px] mt-1"
+        <p className="font-[family-name:var(--font-vt)] text-[26px] text-pixel-slate truncate mt-1"
           title={tournament.name}>
           {tournament.name}
         </p>

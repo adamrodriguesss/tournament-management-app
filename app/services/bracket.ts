@@ -327,25 +327,39 @@ export async function recordMatchScore(
       await supabase.from('event_results').delete().eq('event_id', match.event_id).in('position', [1, 2]);
     }
 
+    let winnerTeamId = newWinnerId;
+    let loserTeamId = newLoserId;
+
+    if (isIndividual) {
+      const [{ data: winnerP }, { data: loserP }] = await Promise.all([
+        supabase.from('participants').select('team_id').eq('id', newWinnerParticipantId).single(),
+        supabase.from('participants').select('team_id').eq('id', newLoserParticipantId).single()
+      ]);
+      winnerTeamId = winnerP?.team_id;
+      loserTeamId = loserP?.team_id;
+    }
+
     // 1st Place
-    await supabase.from('event_results').upsert({
-      event_id: match.event_id,
-      team_id: isIndividual ? null : newWinnerId,
-      participant_id: isIndividual ? newWinnerParticipantId : null,
-      position: 1,
-      points_awarded: event.points_first,
-      recorded_by: adminId
-    }, { onConflict: 'event_id, position' });
+    if (winnerTeamId) {
+      await supabase.from('event_results').upsert({
+        event_id: match.event_id,
+        team_id: winnerTeamId,
+        position: 1,
+        points_awarded: event.points_first,
+        recorded_by: adminId
+      }, { onConflict: 'event_id,position' });
+    }
 
     // 2nd Place
-    await supabase.from('event_results').upsert({
-      event_id: match.event_id,
-      team_id: isIndividual ? null : newLoserId,
-      participant_id: isIndividual ? newLoserParticipantId : null,
-      position: 2,
-      points_awarded: event.points_second,
-      recorded_by: adminId
-    }, { onConflict: 'event_id, position' });
+    if (loserTeamId) {
+      await supabase.from('event_results').upsert({
+        event_id: match.event_id,
+        team_id: loserTeamId,
+        position: 2,
+        points_awarded: event.points_second,
+        recorded_by: adminId
+      }, { onConflict: 'event_id,position' });
+    }
 
     // Mark event as completed
     await supabase.from('events').update({ status: 'completed' }).eq('id', match.event_id);
